@@ -1,0 +1,31 @@
+[app]
+name = "Undefined"
+version = "0.0.1"
+
+[app.debug]
+debug = true
+
+[app.release]
+debug = false
+
+[app.beta]
+debug = false
+
+[app.context.logger.level]
+env = "APPLICATION_LOGGER_LEVEL"
+default = "DEBUG"
+
+[app.release.context.logger.level]
+env = "APPLICATION_LOGGER_LEVEL"
+default = "DEBUG"
+
+[[app.context.path]]
+name = "workspace"
+env = "APPLICATION_WORKSPACE"
+default = "/var/aiteam/app/${app.name}"
+
+[[app.context.path]]
+name = "data"
+env = "APPLICATION_DATA_FOLDER"
+default = "${app.context.path.workspace}/data"
+
