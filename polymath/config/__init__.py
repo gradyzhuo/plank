@@ -1,151 +1,126 @@
 from __future__ import annotations
-from polymath import logger
-from typing import Dict, Optional
-import yaml
-from polymath.config.attribute import Attribute
+from typing import Optional, Dict, Any, List, Tuple
+from polymath.app.context import Context
+from polymath.config.info import ConfigInfoManager
+from polymath.config.info.app import AppConfig
+from polymath.config.info.path import PathConfig
+from polymath.config.info.extra import ExtraConfig
+from polymath.config.info.plugin import PluginConfig
+from polymath.config.info.logger import LoggerConfig
+import copy
 from pathlib import Path
-import re
-from .define import envs
+import toml
 
-rx = r'\$\{(?P<VAR>[a-z A-Z]{1}[\w _ 0-9]+)\}'
+__builtin_support_handlers__ = [
+    ("app", AppConfig),
+    ("logger", LoggerConfig),
+    ("path", PathConfig),
+    ("extra", ExtraConfig),
+    ("plugin", PluginConfig)
+]
 
-def replace_var(string, replaced=lambda var_name: var_name):
-    def replaces(matchobj):
-        VAR = matchobj.groupdict()["VAR"]
-        replaced_path = replaced(VAR.lower())
-        return replaced_path or f"${VAR}"
-    return re.sub(rx, replaces, str(string))
+def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str ='.') -> Dict[str, Any]:
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
 
-_Configuration__singleton_key = "__sigleton"
+_Configuration__default_key = "__default"
 class Configuration:
-    context = {}
-
-    @classmethod
-    def reword(cls, var, name=None, extra_info=None):
-        grounds_dict = {}
-        extra_info = extra_info or {}
-        grounds_dict.update(cls.context)
-        grounds_dict.update(extra_info)
-        result = grounds_dict.get(var) \
-                 or replace_var(var, replaced=lambda var_name: grounds_dict.get(var_name, f"${var_name}"))
-        if name is not None:
-            cls.context[name] = result
-        return result
-
-    __default = None
-
-    @property
-    def name(self) -> str:
-        return self.__name
-
-    @property
-    def info_dict(self)->Dict[str, Attribute]:
-        return self.__info_dict
-
-    @property
-    def debug_mode(self):
-        return self._debug_mode
-
-    @property
-    def mode_name(self)->str:
-        return "debug" if self.debug_mode else "release"
-
-    @property
-    def data_folder_path(self)->Path:
-        return self.path(name="data")
-
-    @property
-    def language(self)->str:
-        return self.__info_dict["language"].value
+    __program_configurations = {}
 
     @classmethod
     def default(cls) -> Configuration:
-        return getattr(cls, _Configuration__singleton_key)
+        singleton = getattr(cls, _Configuration__default_key)
+        assert singleton is not None, "The singleton of Configuration not found. please perform `set_default` first."
+        return singleton
 
     @classmethod
-    def from_file(cls, file_path: Path, extra_config:Dict[str, str] = None):
-        config_name = file_path.name.removesuffix(".yml")
-        with file_path.open("r") as fp:
-            config = yaml.load(fp, Loader=yaml.FullLoader)
-        logger.info(f"Loaded configuration path: {file_path}")
-        logger.info(f"configuration: {config}")
-        extra_config = extra_config or {}
-        for key, e_c in extra_config.items():
-            if isinstance(e_c, dict):
-                for _k, _v in e_c.items():
-                    config[key][_k] = _v
-            else:
-                config[key] = e_c
+    def from_program(cls, program_name: str, as_default: Optional[bool] = None) -> Configuration:
+        configuration = cls.__program_configurations[program_name]
+        as_default = as_default or False
+        if as_default:
+            configuration.set_default()
+        return configuration
 
-        if "base" in config.keys():
-            base_name = config["base"]
-            del config["base"]
-            return cls.from_name(base_name, extra_config=config)
-        
-        debug_mode = config.get("debug", False)
-        info_dict = {
-            key: Attribute.from_dict(config_dict=attribute_dict)
-            for key, attribute_dict in config.get("info", {}).items()
-            if key not in cls.context
+    @classmethod
+    def preload(cls, path: Path, extra_info: Optional[Dict[str, Any]]=None):
+        toml_fp = path.open("r+")
+        config = toml.load(toml_fp)
+        toml_fp.close()
+
+        extra_info = extra_info or {}
+        context = Context.standard()
+        context.update(extra_info)
+        manager = ConfigInfoManager.default()
+
+        program_override_dicts = config.pop("program")
+
+        flatten_dicts = {
+            top_level_name: flatten_dict(config.get(top_level_name, {}), parent_key=top_level_name)
+            for top_level_name, _ in __builtin_support_handlers__
         }
-        cls.context.update({
-            key: attribute.value
-            for key, attribute in info_dict.items()
-        })
 
-        paths_dict = config.get("path", {})
-        for name, path_dict in paths_dict.items():
-            env_key = path_dict["env"]
-            envs.register(env_key, default=path_dict["default"])
+        programs = {}
+        for program_name, program_override_dict in program_override_dicts.items():
+            program_dict = programs.setdefault(program_name, {})
 
-        envs.sync()
+            program_config_dict = {}
+            program_config_dict.update(copy.deepcopy(flatten_dicts))
+            for override_key, override_config_dict in program_override_dict.items():
+                override_flatten_dict = flatten_dict(override_config_dict, parent_key=override_key)
+                updated_dict = program_config_dict[override_key]
+                updated_dict.update(override_flatten_dict)
 
-        raw_paths = {}
-        for name, path_dict in paths_dict.items():
-            env_key = path_dict["env"]
-            path_value = envs[env_key]
-            raw_paths[name] = path_value
-            if "$" not in path_value:
-                cls.context[name] = path_value
+            for key, config_dict in program_config_dict.items():
+                handler_type = manager.get_handler_type(namespace=key)
+                program_dict[key] = handler_type(namespace=key, config_dict=config_dict, context=context)
 
-        return cls.__call__(config_name=config_name, info_dict=info_dict, raw_paths=raw_paths, debug_mode=debug_mode)
+            cls.__program_configurations.update({
+                program_name: Configuration(program=program_name, context=context, **program_dict)
+                for program_name, program_dict in programs.items()
+            })
 
-    def __init__(self, config_name: str, info_dict: Dict[str, str], raw_paths:Dict[str, str], debug_mode=False) -> None:
-        self.__name = config_name
-        self.__info_dict = info_dict
-        self.__raw_paths = raw_paths
-        self.__paths = {}
-        self._debug_mode = debug_mode
+    @property
+    def program(self)->str:
+        return self.__program
 
+    @property
+    def context(self)->Context:
+        return self.__context
 
-    def get(self, name, default=None):
-        attribute = self.info_dict.get(name)
-        return attribute.value if attribute is not None else default
+    @property
+    def app(self)->AppConfig:
+        return self.__config_infos["app"]
 
-    def add_path(self, name:str, path: Path):
-        self.__paths[name] = path
-        type(self).context[name] = str(path)
+    @property
+    def logger(self) -> LoggerConfig:
+        return self.__config_infos["logger"]
 
-    def remove_path(self, name: str)->Path:
-        path = self.__paths[name]
-        del self.__paths[name]
-        return path
+    @property
+    def path(self) -> PathConfig:
+        return self.__config_infos["path"]
 
-    def path(self, name: str)->Path:
-        cls = type(self)
-        path_str = self.__raw_paths[name]
-        if name not in self.__paths.keys():
-            path = Path(cls.reword(path_str, name=name))
-            self.__paths[name] = path
-        return self.__paths[name]
+    @property
+    def plugin(self)->PluginConfig:
+        return self.__config_infos["plugin"]
 
-    def reload(self, extra: Optional[Dict[str, str]] = None):
-        extra = extra or {}
-        cls = type(self)
-        cls.context.update(extra)
-        for name, path_str in self.__raw_paths.items():
-            cls.reword(path_str, name=name)
+    @property
+    def extra(self) -> ExtraConfig:
+        return self.__config_infos["extra"]
 
+    def __init__(self, program: str, context: Context, **config_infos):
+        self.__program = program
+        self.__context = context
+        self.__config_infos = config_infos
 
     def set_default(self):
-        setattr(type(self), _Configuration__singleton_key, self)
+        setattr(type(self), _Configuration__default_key, self)
+
+manager = ConfigInfoManager.default()
+for namespace, config_type in __builtin_support_handlers__:
+    manager.register_handler_type(namespace=namespace, handler_type=config_type)

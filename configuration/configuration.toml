@@ -1,31 +1,32 @@
 [app]
-name = "Undefined"
-version = "0.0.1"
-
-[app.debug]
-debug = true
-
-[app.release]
 debug = false
 
-[app.beta]
-debug = false
+[logger]
+level = "DEBUG"
 
-[app.context.logger.level]
-env = "APPLICATION_LOGGER_LEVEL"
-default = "DEBUG"
+[path]
+workspace = "${workspace_path}"
+data = "${path.workspace}/data"
+plugin = "${path.data}/${PLUGIN}"
 
-[app.release.context.logger.level]
-env = "APPLICATION_LOGGER_LEVEL"
-default = "DEBUG"
 
-[[app.context.path]]
-name = "workspace"
-env = "APPLICATION_WORKSPACE"
-default = "/var/aiteam/app/${app.name}"
+[plugin]
+prefix = "${app.name}_plugin"
 
-[[app.context.path]]
-name = "data"
-env = "APPLICATION_DATA_FOLDER"
-default = "${app.context.path.workspace}/data"
 
+
+
+[extra]
+
+# 
+
+[program.debug]
+app.debug = true
+logger.level = "DEBUG"
+logger.world = "kkk"
+
+[program.release]
+logger.level = "INFO"
+
+[program.beta]
+logger.level = "INFO"

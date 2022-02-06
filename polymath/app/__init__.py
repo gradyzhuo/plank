@@ -2,11 +2,11 @@ from __future__ import annotations
 from polymath.plugins import Plugin
 from polymath.plugins.manager import PluginManager
 from polymath.plugins.resource import Resource
-from polymath.config import Configuration
 from polymath.serving.extension import Extension, ExtensionInfo
 from typing import Optional, List, Any, Generator, Union, Dict, Type
 from pathlib import Path
 from functools import reduce
+from polymath.config import Configuration, flatten_dict
 
 _Application__singleton_key = "__sigleton"
 
