@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polymath-core"
-version = "0.1.0.dev54"
+version = "0.1.0.dev141"
 description = ""
 authors = ["Grady Zhuo <gradyzhuo@gmail.com>"]
 
@@ -13,6 +13,9 @@ python = ">=3.8, <3.10"
 envparse = "^0.2.0"
 pyyaml = "^6.0"
 toml = "^0.10.2"
+pydantic = "^1.9.1"
+nest-asyncio = "^1.5.5"
+click = "^8.1.3"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.4.3"
@@ -20,3 +23,7 @@ jupyterlab = "^3.4.3"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+polymath = 'polymath.commandline:root_cmd'
