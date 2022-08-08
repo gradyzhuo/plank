@@ -142,12 +142,11 @@ class ModulePlugin(Plugin):
         return self.__data_folder_path
 
     def services(self)->List[Service]:
-        return list(self.__services.values())
+        return Service.registered()
 
     @property
     def context(self) -> ModulePlugin.PluginContext:
         return self.__context
-
 
     def __init__(self, name: str, module, delegate: Optional[Plugin.Delegate] = None) -> None:
         self.__name = name
@@ -157,7 +156,6 @@ class ModulePlugin(Plugin):
         self.__context.set(key="plugin", value=name)
         configuration = Configuration.default()
         self.__data_folder_path = configuration.path.get_path("plugin", extra_info={"PLUGIN": name})
-        self.__services = {}
 
     def _name(self) ->str:
         return self.__name
@@ -193,15 +191,6 @@ class ModulePlugin(Plugin):
     def did_discover(self):
         logger.info(f"plugin did discover: {self.name}")
         self.delegate.plugin_did_discover(plugin=self)
-
-    def add_service(self, service: Service):
-        self.__services[service.name()] = service
-
-    def add_services(self, *services: Service):
-        self.__services.update([(service.name(), service) for service in services])
-
-    def service(self, name: str)->Optional[Service]:
-        return self.__services.get(name)
 
     def asset(self, name: str)->Optional[Asset]:
         try:

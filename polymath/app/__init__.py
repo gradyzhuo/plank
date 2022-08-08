@@ -6,12 +6,13 @@ from polymath.plugin import Plugin
 from polymath.plugin.module import ModulePlugin
 from polymath.config import Configuration
 from polymath.serving.service import Service
+from polymath.serving.service import ServiceManagerable
 from polymath.server import Server
 from polymath.app.context import Context
 
 _Application__singleton_key = "__sigleton"
 
-class Application:
+class Application(ServiceManagerable):
     class Delegate:
         def application_will_launch(self, app: Application, launch_options: Dict[str, Any]): pass
 
@@ -118,13 +119,6 @@ class Application:
         plugin_type = self.delegate.application_using_plugin_type(app=self)
         return plugin_type.plugin(name=name)
 
-    def add_service(self, service: Service, name: Optional[str]=None):
-        Service.register(service=service, name=name)
-
-    def add_services_by_plugin(self, plugin: Plugin):
-        for service in plugin.services():
-            Service.register(service=service, name=f"{plugin.name}.{service.name()}", plugin=plugin.name)
-
     def _load_plugin(self):
         plugin_type = self.delegate.application_using_plugin_type(app=self)
         plugins = plugin_type.discover(plugin_prefix=self.__plugin_name_prefix)
@@ -142,8 +136,6 @@ class Application:
             except Exception as e:
                 logger.error(f"The error happened on loading plugin: {plugin.name}.")
                 raise e
-
-            self.add_services_by_plugin(plugin=plugin)
 
     def unload(self):
         for plugin in self.plugins:
