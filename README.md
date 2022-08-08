@@ -1,2 +1,2 @@
 # Polymath 
-### The framework of constructing a serverable application.
+### The framework of buiding a serverable application.
