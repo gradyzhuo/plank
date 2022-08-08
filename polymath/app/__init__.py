@@ -145,20 +145,6 @@ class Application:
 
             self.add_services_by_plugin(plugin=plugin)
 
-                # server = InlineServer.by_host(host=plugin.name.lower(), application=self)
-                # plugin.launch(server=server, **launch_options)
-        # from polymath.serving.connector import Connector
-        # for category in self.configuration.extension.categories:
-        #     for extension_name in self.configuration.extension.names_for_category(category=category):
-        #         connector_dict = self.configuration.extension.connector_dict(name=extension_name, category=category)
-        #         connector_url = connector_dict["url"]
-        #         connector_type = Connector.get_type(url=connector_url)
-        #         connector = connector_type(url=connector_url)
-        #         proxy = Extension.proxy(connector=connector)
-        #         extension_info = ExtensionInfo(name=extension_name, instance=proxy)
-        #         #未完成
-
-
     def unload(self):
         for plugin in self.plugins:
             plugin.unload()
