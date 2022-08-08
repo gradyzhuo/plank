@@ -82,6 +82,14 @@ class Plugin:
     def _delegate(self)->Plugin.Delegate:
         raise NotImplementedError(f"The delegate of Plugin({self.__class__.__name__}) not implemented.")
 
+
+    def add_service(self, service: Service):
+        raise NotImplementedError(f"The method `add_service` of Plugin {self.__class__.__name__} did not implement.")
+
+    def add_services(self, *services: Service):
+        for service in services:
+            self.add_service(service)
+
     def load(self)->NoReturn:
         pass
 
