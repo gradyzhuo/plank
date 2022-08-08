@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional, Dict, Any, List, Tuple
 from polymath.app.context import Context
 from polymath.config.info import ConfigInfoManager
+from polymath.config.info import ConfigInfo
 from polymath.config.info.app import AppConfig
 from polymath.config.info.path import PathConfig
 from polymath.config.info.extra import ExtraConfig
@@ -120,6 +121,10 @@ class Configuration:
 
     def set_default(self):
         setattr(type(self), _Configuration__default_key, self)
+
+    def config(self, namespace:str)->ConfigInfo:
+        return self.__config_infos[namespace]
+
 
 manager = ConfigInfoManager.default()
 for namespace, config_type in __builtin_support_handlers__:

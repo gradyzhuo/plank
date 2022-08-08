@@ -1,44 +1,41 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Optional, List, Any, Generator, Union, Dict, Type
+from typing import Optional, List, Any, Dict, Type
 from polymath import logger
 from polymath.plugin import Plugin
 from polymath.plugin.module import ModulePlugin
-from polymath.config import Configuration, flatten_dict
+from polymath.config import Configuration
 from polymath.serving.service import Service
 from polymath.server import Server
 from polymath.app.context import Context
 
 _Application__singleton_key = "__sigleton"
 
-class ApplicationDelegate:
-        def application_will_launch(self, app:Application, launch_options: Dict[str, Any]): pass
-        def application_did_launch(self, app:Application): pass
-        def application_discover_plugin_prefix(self, app: Application)->str:
+class Application:
+    class Delegate:
+        def application_will_launch(self, app: Application, launch_options: Dict[str, Any]): pass
+
+        def application_did_launch(self, app: Application): pass
+
+        def application_discover_plugin_prefix(self, app: Application) -> str:
             return f"{app.name}_plugin_"
+
         def application_using_plugin_type(self, app: Application) -> Type[Plugin]:
             return ModulePlugin
 
-        def application_did_discover_plugins(self, app: Application, plugins:List[Plugin]): pass
+        def application_did_discover_plugins(self, app: Application, plugins: List[Plugin]): pass
+
         def application_should_install_plugin(self, app: Application, plugin: Plugin) -> bool: return True
+
         def application_did_install_plugin(self, app: Application, plugin: Plugin): pass
-        def application_should_load_plugin(self, app: Application, plugin:Plugin)->bool: return True
+
+        def application_should_load_plugin(self, app: Application, plugin: Plugin) -> bool: return True
+
         def application_did_load_plugin(self, app: Application, plugin: Plugin): pass
 
-
-class ServingManager:
-    def __init__(self):
-        pass
-
-    def set(self):
-        pass
-
-
-class Application:
-
     @classmethod
-    def set_default_delegate_type(cls, delegate_type: Type[ApplicationDelegate]):
-        assert issubclass(delegate_type, ApplicationDelegate) , f"{delegate_type} should be inherited from ApplicationDelegate."
+    def set_default_delegate_type(cls, delegate_type: Type[Application.Delegate]):
+        assert issubclass(delegate_type, Application.Delegate) , f"{delegate_type} should be inherited from Application.Delegate."
         cls.Delegate = delegate_type
 
     @property
@@ -66,7 +63,7 @@ class Application:
         return self.__configuration
 
     @property
-    def delegate(self)->ApplicationDelegate:
+    def delegate(self)->Application.Delegate:
         return self.__delegate
 
     @property
@@ -89,7 +86,7 @@ class Application:
         return getattr(cls, _Application__singleton_key)
 
     @classmethod
-    def construct(cls, name:str, version: str, delegate_type: Type[ApplicationDelegate], workspace_path: Path, **kwargs)->Application:
+    def construct(cls, name:str, version: str, delegate_type: Type[Application.Delegate], workspace_path: Path, **kwargs)->Application:
         defaults = Context.standard()
         defaults.set("workspace_path", str(workspace_path))
         defaults.set("application.name", name)
@@ -104,13 +101,12 @@ class Application:
         return application
 
     
-    def __init__(self, name:str, version: str, delegate: ApplicationDelegate, **kwargs) -> None:
+    def __init__(self, name:str, version: str, delegate: Application.Delegate) -> None:
         self.__name = name
         self.__version = version
         self.__delegate = delegate
         self.__loaded = False
-        self.__launch_options = None
-        self.__configuration: Configuration = None
+        self.__configuration: Optional[Configuration] = None
         self.__server = None
         self.__plugin_name_prefix = delegate.application_discover_plugin_prefix(app=self)
 
@@ -126,7 +122,7 @@ class Application:
         Service.register(service=service, name=name)
 
     def add_services_by_plugin(self, plugin: Plugin):
-        for service in plugin.services:
+        for service in plugin.services():
             Service.register(service=service, name=f"{plugin.name}.{service.name()}", plugin=plugin.name)
 
     def _load_plugin(self):
@@ -163,31 +159,29 @@ class Application:
         #         #未完成
 
 
-    def load(self, program:str, launch_options: Optional[Dict[str, Any]]=None):
-        if self.__loaded:
-            return
-        launch_options = launch_options or {}
-        standard_defaults = Context.standard()
-        standard_defaults.update(launch_options)
-        self.__loaded = True
-
-
     def unload(self):
         for plugin in self.plugins:
             plugin.unload()
         self.__loaded = False
 
     def launch(self, program:str, **options):
+        if self.__loaded: return
+
         assert program is not None, "The program of configuration is needed."
-        self.__launch_options = options
         self.__configuration = Configuration.from_program(program_name=program, as_default=True)
         self.__delegate.application_will_launch(self, options)
-        self.load(program=program, launch_options=options)
+        standard_defaults = Context.standard()
+        standard_defaults.update(options)
+        standard_defaults.update({
+            "program": program
+        })
         self.__delegate.application_did_launch(self)
 
         self._load_plugin()
         for plugin in self.plugins:
             plugin.delegate.application_did_launch(plugin=plugin, launch_options=options)
+
+        self.__loaded = True
 
     def _server_did_startup(self, server: Server):
         self.__server = server

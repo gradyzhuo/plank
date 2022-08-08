@@ -3,14 +3,14 @@ import threading, re, copy, os
 from copy import copy
 from typing import List, Tuple, Any, Optional, Union, Iterable, Dict
 
-_UserDefaults__singleton_key = "__Userdefault"
+_Context__singleton_key = "__Context"
 
 class Context:
 
     @classmethod
     def standard(cls, namespace: Optional[str]=None) -> Context:
         namespace = namespace or "main"
-        key = f"{_UserDefaults__singleton_key}.{namespace}"
+        key = f"{_Context__singleton_key}.{namespace}"
         lock = threading.Lock()
         if not hasattr(cls, key):
             with lock:
@@ -20,9 +20,9 @@ class Context:
 
     @classmethod
     def namespaces(cls, prefix: Optional[str]=None)->List[str]:
-        prefix = f"{_UserDefaults__singleton_key}_{prefix}" if prefix is not None else _UserDefaults__singleton_key
+        prefix = f"{_Context__singleton_key}_{prefix}" if prefix is not None else _Context__singleton_key
         filtered_singleton_keys  = filter(lambda key: key.startswith(prefix), cls.__dict__.keys())
-        return [ key.replace(f"{_UserDefaults__singleton_key}.", "") for key in filtered_singleton_keys ]
+        return [key.replace(f"{_Context__singleton_key}.", "") for key in filtered_singleton_keys]
 
     @property
     def namespace(self)->str:

@@ -1,9 +1,12 @@
 from __future__ import annotations
 from polymath.app.context import Context
+from polymath.serving.service import Service
 from typing import List, Dict, Any, NoReturn, Optional
 
 class Plugin:
-
+    """
+    Abstract class to define what should be implemented.
+    """
     __inherited__:List[Plugin] = []
 
     class Delegate:
@@ -90,3 +93,6 @@ class Plugin:
 
     def did_discover(self):
         pass
+
+    def services(self)->List[Service]:
+        raise NotImplementedError(f"The name of Plugin({self.__class__.__name__}) not implemented.")

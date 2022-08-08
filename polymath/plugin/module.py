@@ -141,7 +141,6 @@ class ModulePlugin(Plugin):
     def data_folder_path(self)-> Path:
         return self.__data_folder_path
 
-    @property
     def services(self)->List[Service]:
         return list(self.__services.values())
 
