@@ -23,8 +23,10 @@ class BindAddress(namedtuple("BindAddress", ("host", "port"))):
 class Server:
 
     @classmethod
-    def by_host(cls, host: str, application: Application, port: Optional[int]=None):
-        return cls(binding=BindAddress(host=host, port=port), application=application)
+    def construct_by_host(cls, host: str, application: Application, port: Optional[int]=None):
+        server = cls(application=application)
+        server.bind(address=BindAddress(host=host, port=port))
+        return server
 
     @property
     def delegate(self)->ServerDelegate:
@@ -42,8 +44,8 @@ class Server:
     def backends(self)->Dict[str, Backend]:
         return self.__registered_backends
 
-    def __init__(self, binding: BindAddress, application: Application, delegate: Optional[ServerDelegate]=None):
-        self.__bind_address = binding
+    def __init__(self, application: Application, delegate: Optional[ServerDelegate]=None):
+        self.__bind_address = None
         self.__registered_backends = {}
         self.__application = application
 
@@ -71,6 +73,9 @@ class Server:
 
     def listen(self, **app_launch_options):
         self.application.launch(**app_launch_options)
+
+    def bind(self, address: BindAddress):
+        self.__bind_address = address
 
     def __safe_call_delegate_method(self, method_name: str)->Any:
         if hasattr(self.delegate, method_name):

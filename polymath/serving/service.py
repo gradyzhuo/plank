@@ -6,6 +6,31 @@ from polymath.app.context import Context
 from polymath.serving import Serving
 from polymath.server.backend.wrapper import WrapperBackend
 
+
+class ServiceManagerable:
+    def add_service(self, service: Service):
+        from polymath.plugin import Plugin
+        plugin_name = None
+        if isinstance(self, Plugin):
+            plugin_name = self.name
+        Service.register(service, name=service.name(), plugin=plugin_name)
+    def add_services(self, *services: Service):
+        for service in services:
+            self.add_service(service)
+
+    def services(self)->List[Service]:
+        from polymath.plugin import Plugin
+        plugin_name = None
+        if isinstance(self, Plugin):
+            plugin_name = self.name
+        return Service.registered(plugin=plugin_name)
+    def service(self, name: str)->Service:
+        from polymath.plugin import Plugin
+        plugin_name = None
+        if isinstance(self, Plugin):
+            plugin_name = self.name
+        return Service.from_name(name=name, plugin=plugin_name)
+
 class Service(Serving):
 
     @classmethod
@@ -16,6 +41,7 @@ class Service(Serving):
 
     @classmethod
     def register(cls, service: Service, name: Optional[str]=None, plugin: Optional[str]=None)->NoReturn:
+        print("🤔🤔 cls.__qualname__:", cls.__qualname__)
         name = name or service.name()
         name = name if plugin is None else f"{plugin}.{name}"
         context = Context.standard(namespace=Service.__qualname__)

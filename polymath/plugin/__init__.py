@@ -1,9 +1,9 @@
 from __future__ import annotations
 from polymath.app.context import Context
-from polymath.serving.service import Service
+from polymath.serving.service import ServiceManagerable
 from typing import List, Dict, Any, NoReturn, Optional
 
-class Plugin:
+class Plugin(ServiceManagerable):
     """
     Abstract class to define what should be implemented.
     """
@@ -82,14 +82,6 @@ class Plugin:
     def _delegate(self)->Plugin.Delegate:
         raise NotImplementedError(f"The delegate of Plugin({self.__class__.__name__}) not implemented.")
 
-
-    def add_service(self, service: Service):
-        raise NotImplementedError(f"The method `add_service` of Plugin {self.__class__.__name__} did not implement.")
-
-    def add_services(self, *services: Service):
-        for service in services:
-            self.add_service(service)
-
     def load(self)->NoReturn:
         pass
 
@@ -101,6 +93,3 @@ class Plugin:
 
     def did_discover(self):
         pass
-
-    def services(self)->List[Service]:
-        raise NotImplementedError(f"The name of Plugin({self.__class__.__name__}) not implemented.")
