@@ -41,7 +41,6 @@ class Service(Serving):
 
     @classmethod
     def register(cls, service: Service, name: Optional[str]=None, plugin: Optional[str]=None)->NoReturn:
-        print("🤔🤔 cls.__qualname__:", cls.__qualname__)
         name = name or service.name()
         name = name if plugin is None else f"{plugin}.{name}"
         context = Context.standard(namespace=Service.__qualname__)
