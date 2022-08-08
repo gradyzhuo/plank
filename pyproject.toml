@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polymath-core"
-version = "0.1.0.dev150"
+version = "0.1.0.dev151"
 description = ""
 authors = ["Grady Zhuo <gradyzhuo@gmail.com>"]
 
