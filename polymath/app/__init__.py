@@ -48,6 +48,10 @@ class Application(ServiceManagerable):
         return self.__version
 
     @property
+    def build_version(self)->str:
+        return self.__build_version
+
+    @property
     def workspace(self)->Path:
         return self.configuration.path.workspace
 
@@ -102,9 +106,10 @@ class Application(ServiceManagerable):
         return application
 
     
-    def __init__(self, name:str, version: str, delegate: Application.Delegate) -> None:
+    def __init__(self, name:str, version: str, delegate: Application.Delegate, build_version:Optional[str]=None) -> None:
         self.__name = name
         self.__version = version
+        self.__build_version = build_version or version
         self.__delegate = delegate
         self.__loaded = False
         self.__configuration: Optional[Configuration] = None

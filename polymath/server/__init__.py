@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from polymath.serving import Service
     from polymath.app import Application
 
-class ServerDelegate:
+class ServerDelegate(Application.Delegate):
     def server_did_startup(self, server: Server): pass
     def server_did_shutdown(self, server: Server): pass
 
@@ -21,12 +21,11 @@ class BindAddress(namedtuple("BindAddress", ("host", "port"))):
         return key
 
 class Server:
-
+    #
     @classmethod
-    def construct_by_host(cls, host: str, application: Application, port: Optional[int]=None):
-        server = cls(application=application)
-        server.bind(address=BindAddress(host=host, port=port))
-        return server
+    def build(cls, name: str, version: str, delegate: ServerDelegate, build_version: Optional[str] = None, **server_kwargs)->Server:
+        application = Application(name=name, version=version, delegate=delegate, build_version=build_version)
+        return cls(application=application, **server_kwargs)
 
     @property
     def delegate(self)->ServerDelegate:
