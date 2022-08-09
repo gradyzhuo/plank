@@ -1,17 +1,9 @@
 from __future__ import annotations
-from typing import Optional, Dict, Callable, TYPE_CHECKING, NoReturn, Any
+from typing import Optional, Dict, Any
+from pathlib import Path
 from collections import namedtuple
 from polymath.server.backend import Backend
-from polymath.utils.path import clearify
-
-if TYPE_CHECKING:
-    from polymath.serving import Service
-    from polymath.app import Application
-
-class ServerDelegate(Application.Delegate):
-    def server_did_startup(self, server: Server): pass
-    def server_did_shutdown(self, server: Server): pass
-
+from polymath.app import Application
 
 class BindAddress(namedtuple("BindAddress", ("host", "port"))):
     def description(self)->str:
@@ -21,14 +13,18 @@ class BindAddress(namedtuple("BindAddress", ("host", "port"))):
         return key
 
 class Server:
+    class Delegate(Application.Delegate):
+        def server_did_startup(self, server: Server): pass
+
+        def server_did_shutdown(self, server: Server): pass
     #
     @classmethod
-    def build(cls, name: str, version: str, delegate: ServerDelegate, build_version: Optional[str] = None, **server_kwargs)->Server:
-        application = Application(name=name, version=version, delegate=delegate, build_version=build_version)
+    def build(cls, name: str, version: str, delegate: Server.Delegate, workspace: Path, build_version: Optional[str] = None, configuration_path:Optional[Path]=None, **server_kwargs)->Server:
+        application = Application.construct(name=name, version=version, build_version=build_version, delegate=delegate, workspace_path=workspace, configuration_path=configuration_path)
         return cls(application=application, **server_kwargs)
 
     @property
-    def delegate(self)->ServerDelegate:
+    def delegate(self)->Server.Delegate:
         return self.__delegate
 
     @property
@@ -43,26 +39,22 @@ class Server:
     def backends(self)->Dict[str, Backend]:
         return self.__registered_backends
 
-    def __init__(self, application: Application, delegate: Optional[ServerDelegate]=None):
+    def __init__(self, application: Application, delegate: Optional[Server.Delegate]=None):
         self.__bind_address = None
         self.__registered_backends = {}
         self.__application = application
 
-        if delegate is None and isinstance(application.delegate, ServerDelegate):
+        if delegate is None and isinstance(application.delegate, Server.Delegate):
             self.__delegate = application.delegate
         else:
-            self.__delegate = delegate or ServerDelegate()
+            self.__delegate = delegate or Server.Delegate()
 
     def add_backend(self, backend: Backend):
-        self.__registered_backends[backend.path()] = backend
+        self.__registered_backends[backend.path] = backend
 
     def add_backends(self, *backends: Backend):
         for backend in backends:
             self.add_backend(backend=backend)
-
-    def add_backends_by_service(self, service: Service):
-        backends = service.get_backends()
-        self.add_backends(*backends)
 
     def remove_backend(self, path: str)->Backend:
         return self.__registered_backends.pop(path)

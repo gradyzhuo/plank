@@ -1,13 +1,12 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Optional, List, Any, Dict, Type
+from typing import Optional, List, Any, Dict, Type, Union
 from polymath import logger
 from polymath.plugin import Plugin
 from polymath.plugin.module import ModulePlugin
 from polymath.config import Configuration
 from polymath.serving.service import Service
 from polymath.serving.service import ServiceManagerable
-from polymath.server import Server
 from polymath.app.context import Context
 
 _Application__singleton_key = "__sigleton"
@@ -80,10 +79,6 @@ class Application(ServiceManagerable):
     def loaded(self):
         return self.__loaded
 
-    @property
-    def server(self)->Optional[Server]:
-        return self.__server
-
     @classmethod
     def main(cls)->Application:
         if not hasattr(cls, _Application__singleton_key):
@@ -91,16 +86,17 @@ class Application(ServiceManagerable):
         return getattr(cls, _Application__singleton_key)
 
     @classmethod
-    def construct(cls, name:str, version: str, delegate_type: Type[Application.Delegate], workspace_path: Path, **kwargs)->Application:
+    def construct(cls, name:str, version: str, delegate: Union[Application.Delegate, Type[Application.Delegate]], workspace_path: Path, build_version: Optional[str]=None, configuration_path:Optional[Path]=None, **kwargs)->Application:
         defaults = Context.standard()
         defaults.set("workspace_path", str(workspace_path))
         defaults.set("application.name", name)
         defaults.set("app.name", name)
 
-        configuration_path = workspace_path / "configuration" / "configuration.toml"
+        configuration_path = configuration_path or workspace_path / "configuration" / "configuration.toml"
         Configuration.preload(path=configuration_path)
-        delegate = delegate_type()
-        application = Application(name=name, version=version, delegate=delegate, **kwargs)
+        if not isinstance(delegate, Application.Delegate) and issubclass(delegate, Application.Delegate):
+            delegate = delegate()
+        application = Application(name=name, version=version, build_version=build_version, delegate=delegate, **kwargs)
         if not hasattr(cls, _Application__singleton_key):
             application.as_main()
         return application
@@ -166,11 +162,11 @@ class Application(ServiceManagerable):
 
         self.__loaded = True
 
-    def _server_did_startup(self, server: Server):
-        self.__server = server
+    def _server_did_startup(self, server):
         for service in Service.registered():
-            server.add_backends_by_service(service)
+            backends = service.get_backends()
+            server.add_backends(*backends)
 
-    def _server_did_shutdown(self, server: Server):
-        self.__server = None
+    def _server_did_shutdown(self, server):
+        pass
 
