@@ -70,10 +70,10 @@ class Server:
     def backend(self, key: str)->Optional[Backend]:
         return self.__registered_backends.get(key)
 
-    def listen(self, **app_launch_options):
-        self.application.launch(**app_launch_options)
+    def launch(self, **options):
+        self.application.launch(**options)
 
-    def bind(self, address: BindAddress):
+    def listen(self, address: BindAddress):
         self.__bind_address = address
 
     def __safe_call_delegate_method(self, method_name: str)->Any:
