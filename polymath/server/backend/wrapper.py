@@ -20,7 +20,7 @@ class WrapperBackend(Backend):
     def end_point(self)->Callable:
         return self.__end_point
 
-    def __routing_path__(self) ->str:
+    def routing_path(self) ->str:
         return self.__path
 
     def __call__(self, *args, **kwargs):

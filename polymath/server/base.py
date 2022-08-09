@@ -50,7 +50,7 @@ class Server:
             self.__delegate = delegate or Server.Delegate()
 
     def add_backend(self, backend: Backend):
-        self.__registered_backends[backend.path] = backend
+        self.__registered_backends[backend.routing_path()] = backend
 
     def add_backends(self, *backends: Backend):
         for backend in backends:

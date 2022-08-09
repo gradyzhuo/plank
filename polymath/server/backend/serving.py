@@ -16,7 +16,7 @@ class ServingBackend(Backend):
         self.__path = path
         self.__serving = serving
 
-    def __routing_path__(self) ->str:
+    def routing_path(self) ->str:
         return self.__path
 
     async def receive(self, request: Request) -> Response:
