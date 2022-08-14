@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "polymath-core"
+name = "plank"
 version = "0.1.0.dev176"
 description = ""
 authors = ["Grady Zhuo <gradyzhuo@gmail.com>"]
 
 packages = [
-    { include = "polymath" }
+    { include = "plank" }
 ]
 
 [tool.poetry.dependencies]
@@ -25,4 +25,4 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-polymath = 'polymath.commandline:root_cmd'
+polymath = 'plank.commandline:root_cmd'
