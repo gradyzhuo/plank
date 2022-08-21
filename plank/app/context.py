@@ -20,7 +20,7 @@ class Context:
 
     @classmethod
     def namespaces(cls, prefix: Optional[str]=None)->List[str]:
-        prefix = f"{_Context__singleton_key}_{prefix}" if prefix is not None else _Context__singleton_key
+        prefix = f"{_Context__singleton_key}.{prefix}" if prefix is not None else _Context__singleton_key
         filtered_singleton_keys  = filter(lambda key: key.startswith(prefix), cls.__dict__.keys())
         return [key.replace(f"{_Context__singleton_key}.", "") for key in filtered_singleton_keys]
 

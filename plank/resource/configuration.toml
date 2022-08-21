@@ -1,0 +1,42 @@
+[app]
+name = "${APPLICATION_NAME}"
+version = "${APPLICATION_VERSION}"
+delegate = "${APPLICATION_DELEGATE}"
+build_version = "${APPLICATION_BUILD_VERSION}"
+debug = false
+
+[logger]
+level = "DEBUG"
+
+
+[logger.info]
+text_color = "default"
+
+[logger.debug]
+text_color = "default"
+
+[logger.warn]
+text_color = "default"
+
+[logger.error]
+text_color = "default"
+
+
+[path]
+workspace = "${APPLICATION_WORKSPACE}"
+data = "${path.workspace}/data"
+plugin = "${path.data}/${PLUGIN}"
+
+[plugin]
+prefix = "${app.name}_plugin"
+
+### program override
+
+[program.debug]
+app.debug = true
+
+[program.release]
+logger.level = "INFO"
+
+[program.beta]
+logger.level = "INFO"

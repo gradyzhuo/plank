@@ -1,52 +1,44 @@
 from __future__ import annotations
 import inspect
-from typing import List, Any, Optional, NoReturn
+from typing import List, Any, Optional, NoReturn, Union, TYPE_CHECKING
 from pydantic import BaseModel
 from plank.serving import Serving
 from plank.app.context import Context
 from plank.server.backend.wrapper import WrapperBackend
 
+if TYPE_CHECKING:
+    from plank.plugin import Plugin
+
 class ServiceManagerable:
     def add_service(self, service: Service):
-        from plank.plugin import Plugin
-        plugin_name = None
-        if isinstance(self, Plugin):
-            plugin_name = self.name
-        Service.register(service, name=service.name(), plugin=plugin_name)
+        Service.register(service, name=service.name())
     def add_services(self, *services: Service):
         for service in services:
             self.add_service(service)
-
     def services(self)->List[Service]:
-        from plank.plugin import Plugin
-        plugin_name = None
-        if isinstance(self, Plugin):
-            plugin_name = self.name
-        return Service.registered(plugin=plugin_name)
+        return Service.registered()
     def service(self, name: str)->Service:
-        from plank.plugin import Plugin
-        plugin_name = None
-        if isinstance(self, Plugin):
-            plugin_name = self.name
-        return Service.from_name(name=name, plugin=plugin_name)
+        return Service.from_name(name=name)
 
 class Service(Serving):
 
     @classmethod
-    def from_name(cls, name: str, plugin: Optional[str]=None)->Service:
+    def from_name(cls, name: str, plugin: Optional[Union[str, Plugin]]=None)->Service:
         context = Context.standard(namespace=Service.__qualname__)
-        name = name if plugin is None else f"{plugin}.{name}"
+        if plugin is not None:
+            plugin_name = plugin.name if isinstance(plugin, Plugin) else plugin
+            name = f"{plugin_name}.{name}"
         return context.get(key=name)
 
     @classmethod
-    def register(cls, service: Service, name: Optional[str]=None, plugin: Optional[str]=None)->NoReturn:
+    def register(cls, service: Service, name: Optional[str]=None, plugin: Optional[Union[str, Plugin]]=None)->NoReturn:
         name = name or service.name()
         name = name if plugin is None else f"{plugin}.{name}"
         context = Context.standard(namespace=Service.__qualname__)
         context.set(key=name, value=service)
 
     @classmethod
-    def registered(cls, plugin: Optional[str]=None)->List[Service]:
+    def registered(cls, plugin: Optional[Union[str, Plugin]]=None)->List[Service]:
         plugin = plugin or ""
         context = Context.standard(namespace=Service.__qualname__)
         return [

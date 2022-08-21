@@ -6,7 +6,7 @@ class PluginConfig(ConfigInfo):
 
     @property
     def prefix(self)->str:
-        return self.get("prefix")
+        return self.get("prefix", reword=True)
 
     def __configure__(self):
         self.__connectors = {}
