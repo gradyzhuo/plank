@@ -38,8 +38,8 @@ class ActionDescriptor:
             path = f"/{clearify(self.__path)}"
         return path
 
-    def action_extra_args(self, **init_args)->Dict[str, Any]:
-        return copy(init_args)
+    def action_extra_args(self, instance:Service, owner:Type[Service])->Dict[str, Any]:
+        return copy(self.__action_args)
 
     def make_action(self, instance:Service, owner:Type[Service])->Action:
         end_point = self.end_point(instance=instance, owner=owner)
