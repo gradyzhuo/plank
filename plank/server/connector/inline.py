@@ -30,7 +30,7 @@ class InlineConnector(Connector):
         service_name = self.path
         self.__server = InlineServer.listened_server(self.address)
         print("self.__server:", self.__server)
-        self.__backend = self.__server.backend(service_name)
+        self.__backend = self.__server.get_action(service_name)
 
     def send(self, request: Request) -> Response:
         return asyncio.run(self.send_async(request=request))

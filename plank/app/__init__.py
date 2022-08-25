@@ -1,14 +1,15 @@
 from __future__ import annotations
 import importlib
 from pathlib import Path
-from typing import Optional, List, Any, Dict, Type, Union
+from typing import Optional, List, Any, Dict, Type, Union, TYPE_CHECKING
 from plank import logger
-from plank.plugin import Plugin
-from plank.plugin.module import ModulePlugin
 from plank.config import Configuration
 from plank.serving.service import Service
 from plank.serving.service import ServiceManagerable
 from plank.app.context import Context
+
+if TYPE_CHECKING:
+    from plank.plugin import Plugin
 
 _Application__singleton_key = "__sigleton"
 
@@ -19,6 +20,7 @@ class Application(ServiceManagerable):
         def application_did_launch(self, app: Application): pass
 
         def application_using_plugin_type(self, app: Application) -> Type[Plugin]:
+            from plank.plugin.module import ModulePlugin
             return ModulePlugin
 
         def application_did_discover_plugins(self, app: Application, plugins: List[Plugin]): pass
@@ -179,7 +181,7 @@ class Application(ServiceManagerable):
     def _server_did_startup(self, server):
         for service in Service.registered():
             backends = service.get_backends()
-            server.add_backends(*backends)
+            server.add_actions(*backends)
 
     def _server_did_shutdown(self, server):
         pass

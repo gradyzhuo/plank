@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 from pathlib import Path
 from collections import namedtuple
-from plank.server.action import Action
 from plank.app import Application
+
+if TYPE_CHECKING:
+    from plank.server.action import Action
 
 class BindAddress(namedtuple("BindAddress", ("host", "port"))):
     def description(self)->str:
@@ -36,7 +38,7 @@ class Server:
         return self.__application
 
     @property
-    def backends(self)->Dict[str, Action]:
+    def actions(self)->Dict[str, Action]:
         return self.__registered_backends
 
     def __init__(self, application: Application, delegate: Optional[Server.Delegate]=None):
@@ -49,17 +51,17 @@ class Server:
         else:
             self.__delegate = delegate or Server.Delegate()
 
-    def add_backend(self, backend: Action):
+    def add_action(self, backend: Action):
         self.__registered_backends[backend.routing_path()] = backend
 
-    def add_backends(self, *backends: Action):
+    def add_actions(self, *backends: Action):
         for backend in backends:
-            self.add_backend(backend=backend)
+            self.add_action(backend=backend)
 
-    def remove_backend(self, path: str)->Action:
+    def remove_action(self, path: str)->Action:
         return self.__registered_backends.pop(path)
 
-    def backend(self, key: str)->Optional[Action]:
+    def get_action(self, key: str)->Optional[Action]:
         return self.__registered_backends.get(key)
 
     def launch(self, **options):
