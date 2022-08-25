@@ -60,10 +60,10 @@ class Service(Serving):
     def perform(self, arguments:BaseModel) -> Any:
         raise NotImplementedError()
 
-    def get_backends(self)->List[WrapperAction]:
+    def get_actions(self)->List[WrapperAction]:
         return [
             member
             for name, member in inspect.getmembers(self)
-            if isinstance(member, WrapperAction) and not hasattr(member, "__qualname__")
+            if isinstance(member, WrapperAction)
         ]
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plank"
-version = "0.1.0.dev202"
+version = "0.1.0.dev203"
 description = ""
 authors = ["Grady Zhuo <gradyzhuo@gmail.com>"]
 include = [
@@ -29,4 +29,4 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-plank = 'plank.command:root_cmd'
+plank = 'plank.utils.command:root_cmd'

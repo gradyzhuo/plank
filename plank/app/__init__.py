@@ -180,9 +180,8 @@ class Application(ServiceManagerable):
 
     def _server_did_startup(self, server):
         for service in Service.registered():
-            backends = service.get_backends()
-            server.add_actions(*backends)
+            actions = service.get_actions()
+            server.add_actions(*actions)
 
-    def _server_did_shutdown(self, server):
-        pass
+    def _server_did_shutdown(self, server): pass
 

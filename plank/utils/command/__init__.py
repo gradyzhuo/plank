@@ -1,11 +1,4 @@
-import importlib
-from pathlib import Path
-
-import click
-
-from plank.app import Application
-from plank.command.base import *
-from plank import logger
+from plank.utils.command.base import *
 from plank.config import Configuration
 
 class ProjectCreateCommand(BaseCommand):
