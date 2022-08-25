@@ -3,19 +3,13 @@ from plank.server.action import Action
 
 class WrapperAction(Action):
 
-    @property
-    def descriptor(self):
-        return self.__descriptor
-
     def __init__(
             self,
             path: str,
-            end_point: Callable,
-            descriptor
+            end_point: Callable
     ):
         self.__path = path
         self.__end_point = end_point
-        self.__descriptor = descriptor
 
     def end_point(self)->Callable:
         return self.__end_point
