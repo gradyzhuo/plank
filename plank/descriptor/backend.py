@@ -1,6 +1,6 @@
 from __future__ import annotations
 from copy import copy
-from typing import Optional, Type, Callable, Dict, Any, TYPE_CHECKING
+from typing import Type, Callable, Dict, Any, TYPE_CHECKING
 from plank.server.backend.wrapper import WrapperBackend
 from plank.serving.service import Service
 from plank.utils.path import clearify
