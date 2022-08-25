@@ -32,7 +32,7 @@ class Service(Serving):
 
     @classmethod
     def register(cls, service: Service, name: Optional[str]=None, plugin: Optional[Union[str, Plugin]]=None)->NoReturn:
-        name = name or service.name() or service.__class__.__qualname__
+        name = name or service.name() or id(service)
         name = name if plugin is None else f"{plugin}.{name}"
         context = Context.standard(namespace=Service.__qualname__)
         context.set(key=name, value=service)
