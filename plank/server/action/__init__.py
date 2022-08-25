@@ -3,7 +3,7 @@ from plank.server.message import Request, Response
 from plank.app.context import Context
 from plank.utils.path import clearify
 
-class Backend:
+class Action:
 
     def routing_path(self)->str:
         raise NotImplementedError

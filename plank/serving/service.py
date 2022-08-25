@@ -4,7 +4,7 @@ from typing import List, Any, Optional, NoReturn, Union, TYPE_CHECKING
 from pydantic import BaseModel
 from plank.serving import Serving
 from plank.app.context import Context
-from plank.server.backend.wrapper import WrapperBackend
+from plank.server.action.wrapper import WrapperAction
 
 if TYPE_CHECKING:
     from plank.plugin import Plugin
@@ -60,10 +60,10 @@ class Service(Serving):
     def perform(self, arguments:BaseModel) -> Any:
         raise NotImplementedError()
 
-    def get_backends(self)->List[WrapperBackend]:
+    def get_backends(self)->List[WrapperAction]:
         return [
             member
             for name, member in inspect.getmembers(self)
-            if isinstance(member, WrapperBackend) and not hasattr(member, "__qualname__")
+            if isinstance(member, WrapperAction) and not hasattr(member, "__qualname__")
         ]
 

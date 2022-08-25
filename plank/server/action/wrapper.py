@@ -1,7 +1,7 @@
 from typing import Callable
-from plank.server.backend import Backend
+from plank.server.action import Action
 
-class WrapperBackend(Backend):
+class WrapperAction(Action):
 
     @property
     def descriptor(self):

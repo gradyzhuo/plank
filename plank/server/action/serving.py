@@ -1,12 +1,12 @@
 import inspect
 from plank.serving import Serving
-from plank.server.backend import Backend
+from plank.server.action import Action
 from plank.server.message import Request, Response
 from typing import Union, List, Dict, Any
 from pydantic import BaseModel
 from functools import reduce
 
-class ServingBackend(Backend):
+class ServingAction(Action):
 
     @property
     def serving(self)->Serving:

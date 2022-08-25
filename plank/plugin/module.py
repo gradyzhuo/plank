@@ -173,7 +173,7 @@ class ModulePlugin(Plugin):
     def launch(self, **options)->NoReturn:
         pass
         # for extension_info in self.__extension_infos:
-        #     server.add_backend(path=extension_info.extension.serving_path(), backend=ServingBackend(serving=extension_info.extension))
+        #     server.add_backend(path=extension_info.extension.serving_path(), action=ServingBackend(serving=extension_info.extension))
         # server.listen()
 
     def did_unload(self)->NoReturn:

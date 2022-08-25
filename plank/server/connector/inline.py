@@ -2,7 +2,7 @@ import nest_asyncio, asyncio
 from plank.server.message import Request, Response
 from plank.server import Server
 from plank.server.inline import InlineServer
-from plank.server.backend import Backend
+from plank.server.action import Action
 from plank.server.connector import Connector
 
 nest_asyncio.apply()
@@ -14,7 +14,7 @@ class InlineConnector(Connector):
         return self.__server
 
     @property
-    def backend(self)->Backend:
+    def backend(self)->Action:
         return self.__backend
 
     @classmethod
