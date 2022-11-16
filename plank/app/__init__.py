@@ -1,11 +1,10 @@
 from __future__ import annotations
-import importlib
 from pathlib import Path
 from typing import Optional, List, Any, Dict, Type, Union, TYPE_CHECKING
 from plank import logger
 from plank.config import Configuration
 from plank.serving.service import Service
-from plank.serving.service import ServiceManagerable
+from plank.serving.interface import ServiceManagerable
 from plank.app.context import Context
 
 if TYPE_CHECKING:
@@ -19,7 +18,7 @@ class Application(ServiceManagerable):
 
         def application_did_launch(self, app: Application): pass
 
-        def application_using_plugin_type(self, app: Application) -> Type[Plugin]:
+        def application_using_plugin_type(self, app: Application, prefix: str) -> Type[Plugin]:
             from plank.plugin.module import ModulePlugin
             return ModulePlugin
 
@@ -40,15 +39,15 @@ class Application(ServiceManagerable):
 
     @property
     def name(self)->str:
-        return self.__name
+        return self.__configuration.app.name
 
     @property
     def version(self)->str:
-        return self.__version
+        return self.configuration.app.version
 
     @property
     def build_version(self)->str:
-        return self.__build_version
+        return self.configuration.app.build_version
 
     @property
     def workspace(self)->Path:
@@ -57,10 +56,6 @@ class Application(ServiceManagerable):
     @property
     def debug(self)->bool:
         return self.configuration.app.debug
-
-    @property
-    def plugin_name_prefix(self)->str:
-        return self.configuration.plugin.prefix
 
     @property
     def configuration(self)->Configuration:
@@ -72,8 +67,9 @@ class Application(ServiceManagerable):
 
     @property
     def plugins(self)->List[Plugin]:
-        plugin_type = self.delegate.application_using_plugin_type(app=self)
-        return plugin_type.installed()
+        return self.__installed_plugins or []
+        # plugin_type = self.delegate.application_using_plugin_type(app=self)
+        # return plugin_type.installed()
 
     @property
     def loaded(self):
@@ -86,34 +82,29 @@ class Application(ServiceManagerable):
         return getattr(cls, _Application__singleton_key)
 
     @classmethod
-    def construct(cls, name:str, version: str, delegate: Union[Application.Delegate, Type[Application.Delegate]], workspace_path: Path, build_version: Optional[str]=None, configuration_path:Optional[Path]=None, **kwargs)->Application:
+    def construct(cls, name:str, version: str, delegate: Union[Application.Delegate, Type[Application.Delegate]], workspace_path: Path, build_version: Optional[str]=None, configuration_path:Optional[Path]=None,**kwargs)->Application:
         defaults = Context.standard()
         defaults.set("workspace_path", str(workspace_path))
         defaults.set("application.name", name)
         defaults.set("app.name", name)
 
         configuration_path = configuration_path or workspace_path / "configuration" / "configuration.toml"
-        Configuration.preload(path=configuration_path)
+        programs = Configuration.build(path=configuration_path)
         if not isinstance(delegate, Application.Delegate) and issubclass(delegate, Application.Delegate):
             delegate = delegate()
-        application = Application(name=name, version=version, build_version=build_version, delegate=delegate, **kwargs)
+        application = Application(name=name, version=version, build_version=build_version, delegate=delegate, programs=programs)
         if not hasattr(cls, _Application__singleton_key):
             application.as_main()
         return application
 
     @classmethod
-    def construct_from_configuration(cls, configuration: Configuration):
-        application_delegate: str = configuration.app.delegate
-        package_namespace, delegate_class_name = application_delegate.split(":")
-        module = importlib.import_module(package_namespace)
-        delegate_type = getattr(module, delegate_class_name)
+    def construct_from_configuration_path(cls, configuration_path: Path, delegate: Application.Delegate, **kwargs):
+        programs = Configuration.build(path=configuration_path)
 
         application = Application(
-            name=configuration.app.name,
-            version=configuration.app.version,
-            build_version=configuration.app.build_version,
-            delegate=delegate_type()
-
+            delegate=delegate,
+            programs=programs,
+            **kwargs
         )
         if not hasattr(cls, _Application__singleton_key):
             application.as_main()
@@ -121,24 +112,29 @@ class Application(ServiceManagerable):
         return application
 
     
-    def __init__(self, name:str, version: str, delegate: Application.Delegate, build_version:Optional[str]=None) -> None:
-        self.__name = name
-        self.__version = version
-        self.__build_version = build_version or version
+    def __init__(self, delegate: Application.Delegate, configuration: Configuration) -> None:
         self.__delegate = delegate
+        self.__configuration = configuration
+        # self.__name = configuration.app.name
+        # self.__version = configuration.app.version
+        # self.__build_version = configuration.app.build_version
+        # self.__name = name or "${app.name}"
+        # self.__version = version or "${app.version}"
+        # self.__build_version = build_version or "${app.build_version}"
         self.__loaded = False
-        self.__configuration: Optional[Configuration] = None
+        # self.__programs = programs
+        self.__installed_plugins = []
 
     def as_main(self):
         setattr(Application, _Application__singleton_key, self)
 
-    def plugin(self, name:str)->Plugin:
-        plugin_type = self.delegate.application_using_plugin_type(app=self)
-        return plugin_type.plugin(name=name)
-
     def _load_plugin(self):
-        plugin_type = self.delegate.application_using_plugin_type(app=self)
-        plugins = plugin_type.discover(plugin_prefix=self.plugin_name_prefix)
+        plugin_prefixes = self.configuration.plugin.prefix
+        plugins = []
+        for prefix in plugin_prefixes:
+            plugin_type = self.delegate.application_using_plugin_type(self, prefix=prefix)
+            if hasattr(plugin_type, "discover"):
+                plugins += (plugin_type.discover(plugin_prefix=prefix) or [])
 
         if len(plugins) > 0:
             self.delegate.application_did_discover_plugins(app=self, plugins=plugins)
@@ -146,10 +142,12 @@ class Application(ServiceManagerable):
             try:
                 if self.delegate.application_should_install_plugin(app=self, plugin=plugin):
                     plugin_type.install(plugin=plugin)
+                    self.__installed_plugins.append(plugin)
                     self.delegate.application_did_install_plugin(app=self, plugin=plugin)
-                if self.delegate.application_should_load_plugin(app=self, plugin=plugin):
-                    plugin.load()
-                    self.delegate.application_did_load_plugin(app=self, plugin=plugin)
+                    # load plugin if installed, otherwise passing.
+                    if self.delegate.application_should_load_plugin(app=self, plugin=plugin):
+                        plugin.load()
+                        self.delegate.application_did_load_plugin(app=self, plugin=plugin)
             except Exception as e:
                 logger.error(f"The error happened on loading plugin: {plugin.name}.")
                 raise e
@@ -159,17 +157,17 @@ class Application(ServiceManagerable):
             plugin.unload()
         self.__loaded = False
 
-    def launch(self, program:str, **options):
+    def launch(self, **options):
         if self.__loaded: return
 
-        assert program is not None, "The program of configuration is needed."
-        self.__configuration = Configuration.from_program(program_name=program, as_default=True)
+        # configuration = self.__programs.get(program)
+        # assert configuration is not None, f"{program} not in programs({self.__programs.keys()})"
+        self.__configuration.set_default()
         self.__delegate.application_will_launch(self, options)
-        standard_defaults = Context.standard()
-        standard_defaults.update(options)
-        standard_defaults.update({
-            "program": program
-        })
+        standard_context = Context.standard()
+        standard_context.update(options)
+        standard_context.update(self.configuration.context)
+        self.as_main()
         self.__delegate.application_did_launch(self)
 
         self._load_plugin()
@@ -178,10 +176,12 @@ class Application(ServiceManagerable):
 
         self.__loaded = True
 
+
     def _server_did_startup(self, server):
         for service in Service.registered():
             actions = service.get_actions()
-            server.add_actions(*actions)
+            print("actions:", actions)
+            server.add_actions(*(actions.values()))
 
     def _server_did_shutdown(self, server): pass
 
