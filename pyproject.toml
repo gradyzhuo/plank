@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "plank"
-version = "0.1.0.dev206"
+version = "0.1.0"
 description = ""
-authors = ["Grady Zhuo <gradyzhuo@gmail.com>"]
+authors = ["Grady Zhuo <grady@ospark.org>"]
 include = [
     "plank/resource/configuration.toml"
 ]
@@ -12,7 +12,9 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.10"
+python = "^3.8"
+plank-core = "^0.1.0"
+plank-tool-logger = "^0.1.0"
 envparse = "^0.2.0"
 pyyaml = "^6.0"
 toml = "^0.10.2"
