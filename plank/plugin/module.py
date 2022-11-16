@@ -1,18 +1,23 @@
 from __future__ import annotations
-import importlib, pkgutil, sys, inspect
+
+import asyncio
+import importlib
+import inspect
+import pkgutil
+import sys
 from pathlib import Path
 from typing import NoReturn, Dict, Any, Optional, List, Type, Union
-from plank import logger
-from plank.config import Configuration
-from plank.app.context import Context
-from plank.serving.service import Service
-from plank.plugin import Plugin
-from plank.plugin.asset import Asset
 
 import nest_asyncio
-import asyncio
+from plank import logger
+from plank.app.context import Context
+from plank.config import Configuration
+from plank.plugin import Plugin
+from plank.plugin.asset import Asset
+from plank.serving.service import Service
 
 nest_asyncio.apply()
+
 
 class ModulePlugin(Plugin):
     __package_name_mappings__: Dict[str, Plugin] = {}
@@ -22,7 +27,7 @@ class ModulePlugin(Plugin):
         def store(self, value: Any, for_key: str):
             return self.set(key=for_key, value=value)
 
-        def get_value(self, for_key: str)->Optional[Any]:
+        def get_value(self, for_key: str) -> Optional[Any]:
             return self.get(key=for_key, reword=True)
 
         def __getitem__(self, key: str):
@@ -47,8 +52,6 @@ class ModulePlugin(Plugin):
         current_path_modules = cls.__discover_module(paths=[current_path], plugin_prefix=plugin_prefix)
         modules_dict.update(site_package_modules)
         modules_dict.update(current_path_modules)
-
-
 
         plugins = [
             cls.from_module(module=module)
@@ -77,15 +80,14 @@ class ModulePlugin(Plugin):
         except:
             return None
 
-
     @classmethod
-    def clear_package_name(cls, package_name: str)->str:
+    def clear_package_name(cls, package_name: str) -> str:
         return str(package_name).split(".")[0]
 
     @classmethod
-    def plugin_by_module(cls, module)->Plugin:
+    def plugin_by_module(cls, module) -> Plugin:
         package_name = cls.clear_package_name(module.__package__)
-        return  cls.__package_name_mappings__[package_name]
+        return cls.__package_name_mappings__[package_name]
 
     @classmethod
     def plugin_by_object(cls, object: Union[Any, Type[Any]]) -> Plugin:
@@ -132,7 +134,6 @@ class ModulePlugin(Plugin):
             "delegate": _delegate
         }
 
-
     @property
     def module(self):
         return self.__module
@@ -142,10 +143,10 @@ class ModulePlugin(Plugin):
         return self.__class__.clear_package_name(self.module.__package__)
 
     @property
-    def data_folder_path(self)-> Path:
+    def data_folder_path(self) -> Path:
         return self.__data_folder_path
 
-    def services(self)->List[Service]:
+    def services(self) -> List[Service]:
         return Service.registered()
 
     @property
@@ -161,26 +162,27 @@ class ModulePlugin(Plugin):
         configuration = Configuration.default()
         self.__data_folder_path = configuration.path.get_path("plugin", extra_info={"PLUGIN": name})
 
-    def _name(self) ->str:
+    def _name(self) -> str:
         return self.__name
 
-    def _delegate(self) ->Plugin.Delegate:
+    def _delegate(self) -> Plugin.Delegate:
         return self.__delegate
 
-    def will_load(self)->NoReturn: pass
+    def will_load(self) -> NoReturn:
+        pass
 
-    def load(self)->NoReturn:
+    def load(self) -> NoReturn:
         self.will_load()
         logger.info(f"plugin did load: {self.name}")
         self.delegate.plugin_did_load(plugin=self)
 
-    def launch(self, **options)->NoReturn:
+    def launch(self, **options) -> NoReturn:
         pass
         # for extension_info in self.__extension_infos:
         #     server.add_backend(path=extension_info.extension.serving_path(), action=ServingBackend(serving=extension_info.extension))
         # server.listen()
 
-    def did_unload(self)->NoReturn:
+    def did_unload(self) -> NoReturn:
         pass
 
     def unload(self):
@@ -199,12 +201,13 @@ class ModulePlugin(Plugin):
         logger.info(f"plugin did discover: {self.name}")
         self.delegate.plugin_did_discover(plugin=self)
 
-    def asset(self, name: str)->Optional[Asset]:
+    def asset(self, name: str) -> Optional[Asset]:
         try:
             return self.__assets[name].copy_with_base_path(base_path=self.data_folder_path)
         except KeyError:
             available_keys = "[ " + ",".join(self.__assets.keys()) + " ]"
-            raise KeyError(f"The asset name: {name}, not found in plugin: {self.name}, available keys: {available_keys}")
+            raise KeyError(
+                f"The asset name: {name}, not found in plugin: {self.name}, available keys: {available_keys}")
 
     # #inline://{PLUGIN}:{EXTENSION_PORT/
     # def connector(self, extension_name: str)->Connector:
@@ -214,7 +217,7 @@ class ModulePlugin(Plugin):
     #     connector_type = Connector.get_type(url=connector_url)
     #     return connector_type(url=connector_url)
 
-    def assets_by_type(self, asset_type: str)->Dict[str, Asset]:
+    def assets_by_type(self, asset_type: str) -> Dict[str, Asset]:
         return {
             asset_name: self.asset(asset_name)
             for asset_name, asset in self.__assets.items()

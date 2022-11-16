@@ -1,16 +1,19 @@
 from __future__ import annotations
+
+from typing import List, Dict, Any, NoReturn, Optional, TYPE_CHECKING
+
 from plank.app.context import Context
 from plank.serving.interface import ServiceManagerable
-from typing import List, Dict, Any, NoReturn, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from plank.serving.service import Service
+
 
 class Plugin(ServiceManagerable):
     """
     Abstract class to define what should be implemented.
     """
-    __inherited__:List[Plugin] = []
+    __inherited__: List[Plugin] = []
 
     class Delegate:
         def application_did_launch(self, plugin: Plugin, launch_options: Dict[str, Any]):
@@ -27,7 +30,6 @@ class Plugin(ServiceManagerable):
 
         def plugin_did_unload(self, plugin: Plugin):
             pass
-
 
     @classmethod
     def discover(cls, *args, **kwargs) -> List[Plugin]:
@@ -46,19 +48,19 @@ class Plugin(ServiceManagerable):
         plugin.did_install()
 
     @classmethod
-    def installed(cls) ->List[Plugin]:
+    def installed(cls) -> List[Plugin]:
         context = Context.standard(cls.__qualname__)
         return list(context.values())
 
     @classmethod
-    def plugin(cls, name: str)->Plugin:
+    def plugin(cls, name: str) -> Plugin:
         context = Context.standard(cls.__qualname__)
         if name not in context.keys():
             raise KeyError(f"Any plugin can be found with name: {name}, by type of plugin: {cls.__qualname__}.")
         return context.get(key=name)
 
     @classmethod
-    def current(cls)->Optional[Plugin]:
+    def current(cls) -> Optional[Plugin]:
         for subclass in Plugin.__inherited__:
             plugin = subclass.current()
             if plugin is not None:
@@ -69,23 +71,21 @@ class Plugin(ServiceManagerable):
         if cls not in Plugin.__inherited__:
             Plugin.__inherited__.append(cls)
 
-
     @property
-    def name(self)->str:
+    def name(self) -> str:
         return self._name()
 
     @property
-    def delegate(self)->Plugin.Delegate:
+    def delegate(self) -> Plugin.Delegate:
         return self._delegate()
 
-
-    def _name(self)->str:
+    def _name(self) -> str:
         raise NotImplementedError(f"The name of Plugin({self.__class__.__name__}) not implemented.")
 
-    def _delegate(self)->Plugin.Delegate:
+    def _delegate(self) -> Plugin.Delegate:
         raise NotImplementedError(f"The delegate of Plugin({self.__class__.__name__}) not implemented.")
 
-    def load(self)->NoReturn:
+    def load(self) -> NoReturn:
         pass
 
     def unload(self):

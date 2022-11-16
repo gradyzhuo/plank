@@ -1,10 +1,12 @@
-import click
 from typing import List, NoReturn, Dict, Any
+
+import click
 from plank.serving import Serving
+
 
 class BaseCommand(Serving):
 
-    def name(self) ->str:
+    def name(self) -> str:
         return self.__name
 
     def __init__(self, name: str):
@@ -12,7 +14,7 @@ class BaseCommand(Serving):
         self._options = self.__options__() or []
         self._arguments = self.__arguments__() or []
 
-    def make_command(self)->click.Command:
+    def make_command(self) -> click.Command:
         params = self.get_params()
         return click.Command(name=self.name(), callback=self.perform, params=params)
 
@@ -26,11 +28,11 @@ class BaseCommand(Serving):
     def __invoke__(self, parameters: Dict[str, Any]) -> NoReturn:
         pass
 
-    def get_params(self)->List[click.Parameter]:
+    def get_params(self) -> List[click.Parameter]:
         return self._arguments + self._options
 
-    #handle paramter and return extension data
-    def __prepare_extension__(self, context:click.Context, parameters: Dict[str, Any])->Dict[str, Any]:
+    # handle paramter and return extension data
+    def __prepare_extension__(self, context: click.Context, parameters: Dict[str, Any]) -> Dict[str, Any]:
         return parameters
 
     # override

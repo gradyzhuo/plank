@@ -1,5 +1,6 @@
 from enum import Enum, EnumMeta
 
+
 class ErrorMeta(EnumMeta):
     def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1):
         if value.__class__ is str:

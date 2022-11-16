@@ -1,16 +1,19 @@
 from __future__ import annotations
+
 from pathlib import Path
 from typing import Optional, List, Any, Dict, Type, Union, TYPE_CHECKING
+
 from plank import logger
-from plank.config import Configuration
-from plank.serving.service import Service
-from plank.serving.interface import ServiceManagerable
 from plank.app.context import Context
+from plank.config import Configuration
+from plank.serving.interface import ServiceManagerable
+from plank.serving.service import Service
 
 if TYPE_CHECKING:
     from plank.plugin import Plugin
 
 _Application__singleton_key = "__sigleton"
+
 
 class Application(ServiceManagerable):
     class Delegate:
@@ -34,39 +37,40 @@ class Application(ServiceManagerable):
 
     @classmethod
     def set_default_delegate_type(cls, delegate_type: Type[Application.Delegate]):
-        assert issubclass(delegate_type, Application.Delegate) , f"{delegate_type} should be inherited from Application.Delegate."
+        assert issubclass(delegate_type,
+                          Application.Delegate), f"{delegate_type} should be inherited from Application.Delegate."
         cls.Delegate = delegate_type
 
     @property
-    def name(self)->str:
+    def name(self) -> str:
         return self.__configuration.app.name
 
     @property
-    def version(self)->str:
+    def version(self) -> str:
         return self.configuration.app.version
 
     @property
-    def build_version(self)->str:
+    def build_version(self) -> str:
         return self.configuration.app.build_version
 
     @property
-    def workspace(self)->Path:
+    def workspace(self) -> Path:
         return self.configuration.path.workspace
 
     @property
-    def debug(self)->bool:
+    def debug(self) -> bool:
         return self.configuration.app.debug
 
     @property
-    def configuration(self)->Configuration:
+    def configuration(self) -> Configuration:
         return self.__configuration
 
     @property
-    def delegate(self)->Application.Delegate:
+    def delegate(self) -> Application.Delegate:
         return self.__delegate
 
     @property
-    def plugins(self)->List[Plugin]:
+    def plugins(self) -> List[Plugin]:
         return self.__installed_plugins or []
         # plugin_type = self.delegate.application_using_plugin_type(app=self)
         # return plugin_type.installed()
@@ -76,13 +80,16 @@ class Application(ServiceManagerable):
         return self.__loaded
 
     @classmethod
-    def main(cls)->Application:
+    def main(cls) -> Application:
         if not hasattr(cls, _Application__singleton_key):
-            raise RuntimeError(f"Application had no an instance. please get instance by Application(delegate=...) first.")
+            raise RuntimeError(
+                f"Application had no an instance. please get instance by Application(delegate=...) first.")
         return getattr(cls, _Application__singleton_key)
 
     @classmethod
-    def construct(cls, name:str, version: str, delegate: Union[Application.Delegate, Type[Application.Delegate]], workspace_path: Path, build_version: Optional[str]=None, configuration_path:Optional[Path]=None,**kwargs)->Application:
+    def construct(cls, name: str, version: str, delegate: Union[Application.Delegate, Type[Application.Delegate]],
+                  workspace_path: Path, build_version: Optional[str] = None, configuration_path: Optional[Path] = None,
+                  **kwargs) -> Application:
         defaults = Context.standard()
         defaults.set("workspace_path", str(workspace_path))
         defaults.set("application.name", name)
@@ -92,7 +99,8 @@ class Application(ServiceManagerable):
         programs = Configuration.build(path=configuration_path)
         if not isinstance(delegate, Application.Delegate) and issubclass(delegate, Application.Delegate):
             delegate = delegate()
-        application = Application(name=name, version=version, build_version=build_version, delegate=delegate, programs=programs)
+        application = Application(name=name, version=version, build_version=build_version, delegate=delegate,
+                                  programs=programs)
         if not hasattr(cls, _Application__singleton_key):
             application.as_main()
         return application
@@ -111,7 +119,6 @@ class Application(ServiceManagerable):
 
         return application
 
-    
     def __init__(self, delegate: Application.Delegate, configuration: Configuration) -> None:
         self.__delegate = delegate
         self.__configuration = configuration
@@ -176,12 +183,11 @@ class Application(ServiceManagerable):
 
         self.__loaded = True
 
-
     def _server_did_startup(self, server):
         for service in Service.registered():
             actions = service.get_actions()
             print("actions:", actions)
             server.add_actions(*(actions.values()))
 
-    def _server_did_shutdown(self, server): pass
-
+    def _server_did_shutdown(self, server):
+        pass

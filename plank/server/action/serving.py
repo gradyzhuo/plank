@@ -1,22 +1,24 @@
 import inspect
-from plank.serving import Serving
+from functools import reduce
+from typing import Union, List, Dict, Any
+
 from plank.server.action import Action
 from plank.server.message import Request, Response
-from typing import Union, List, Dict, Any
+from plank.serving import Serving
 from pydantic import BaseModel
-from functools import reduce
+
 
 class ServingAction(Action):
 
     @property
-    def serving(self)->Serving:
+    def serving(self) -> Serving:
         return self.__serving
 
     def __init__(self, path: str, serving: Serving):
         self.__path = path
         self.__serving = serving
 
-    def routing_path(self) ->str:
+    def routing_path(self) -> str:
         return self.__path
 
     async def receive(self, request: Request) -> Response:
@@ -43,7 +45,8 @@ class ServingAction(Action):
                     argument_count = len(request.arguments.keys())
                     model_keys = parameter.annotation.schema(by_alias=True).keys()
                     if argument_count > 0:
-                        keys_compared = reduce(lambda result, item: result and (item in model_keys), request.arguments.keys(), True)
+                        keys_compared = reduce(lambda result, item: result and (item in model_keys),
+                                               request.arguments.keys(), True)
                         if keys_compared:
                             model = parameter.annotation.construct(**request.arguments)
                         else:

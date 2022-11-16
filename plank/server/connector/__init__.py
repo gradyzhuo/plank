@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-import re
-
-from plank.server.message import Request, Response
-from plank.server import Server, BindAddress
-from urllib.parse import urlparse, ParseResult
-from typing import Type, Dict, Union
 import importlib
+import re
+from typing import Type, Dict, Union
+from urllib.parse import urlparse, ParseResult
+
+from plank.server import Server, BindAddress
+from plank.server.message import Request, Response
 
 
 class Connector:
-    __registered_connectors: Dict[str, Type[Connector]] = {  }
+    __registered_connectors: Dict[str, Type[Connector]] = {}
 
     @classmethod
-    def get_type(cls, url: str)->Type[Connector]:
+    def get_type(cls, url: str) -> Type[Connector]:
         url_components = urlparse(url=url)
         return cls.__registered_connectors[url_components.scheme]
 
     @classmethod
-    def connect(cls, url: str, **kwargs)->Connector:
+    def connect(cls, url: str, **kwargs) -> Connector:
         connector_type = cls.get_type(url=url)
         return connector_type(url=url, **kwargs)
 
@@ -35,25 +35,26 @@ class Connector:
         cls.__registered_connectors[connector_type.support_scheme()] = connector_type
 
     @classmethod
-    def support_scheme(cls)->str:
+    def support_scheme(cls) -> str:
         raise NotImplementedError
 
     @property
-    def address(self)->Server.BindAddress:
+    def address(self) -> Server.BindAddress:
         return BindAddress(self.__url_components.hostname, self.__url_components.port)
 
     @property
-    def path(self)->str:
+    def path(self) -> str:
         return self.__url_components.path
 
     @property
-    def url_components(self)->ParseResult:
+    def url_components(self) -> ParseResult:
         return self.__url_components
 
     def __init__(self, url: str, **kwargs):
         self.__url_components = urlparse(url=url)
 
-    def send(self, request: Request)->Response:
+    def send(self, request: Request) -> Response:
         raise NotImplementedError()
+
 
 Connector.register(connector_type="plank.server.connector.inline:InlineConnector")

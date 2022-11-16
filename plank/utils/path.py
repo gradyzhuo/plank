@@ -1,6 +1,7 @@
 from typing import Optional
 
-def clearify(path: str, prefix:Optional[bool]=None, suffix:Optional[bool]=None)->str:
+
+def clearify(path: str, prefix: Optional[bool] = None, suffix: Optional[bool] = None) -> str:
     prefix = prefix if prefix is not None else True
     suffix = suffix if suffix is not None else True
     if prefix:

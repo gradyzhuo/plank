@@ -1,10 +1,10 @@
-from plank.utils.command.base import *
 from plank.config import Configuration
+from plank.utils.command.base import *
+
 
 class ProjectCreateCommand(BaseCommand):
     def __invoke__(self, parameters: Dict[str, Any]) -> NoReturn:
         pass
-
 
 
 class ServerRunCommand(BaseCommand):
@@ -21,7 +21,7 @@ class ServerRunCommand(BaseCommand):
         launch_options = parameters["launch_options"]
         options = {
             key: value
-            for key, value in [ option.split("=") for option in  launch_options]
+            for key, value in [option.split("=") for option in launch_options]
         }
         print("app:", app, app.name)
         print("configuration.plugin.prefix:", configuration.plugin.prefix)
@@ -30,7 +30,6 @@ class ServerRunCommand(BaseCommand):
         # server: FastAPIServer = FastAPIServer.build(name=configuration.app.name, version=configuration.app.version,
         #                                             build_version=configuration.app.build_version,
         #                                             delegate=AppDelegate(), workspace=workspace, path_prefix="irian")
-
 
         # package_namespace, delegate_class_name = application_delegate.split(":")
 
@@ -50,7 +49,8 @@ class ServerRunCommand(BaseCommand):
 
     def __options__(self) -> List[click.Option]:
         return [
-            click.Option(["-t", "--server-type"], default="http", type=click.Choice(["http", "grpc"]), show_choices=True),
+            click.Option(["-t", "--server-type"], default="http", type=click.Choice(["http", "grpc"]),
+                         show_choices=True),
             click.Option(["-c", "--configuration"], required=True),
             click.Option(["-p", "--program"], default="debug")
             # click.Option(["--instance-type"], default="application", type=click.Choice(["application", "plugin"]), show_choices=True)
@@ -71,15 +71,16 @@ class PolymathServerCommand(click.MultiCommand):
     def list_commands(self, ctx):
         return ["run"]
 
-    def get_command(self, ctx:click.Context, name: str):
+    def get_command(self, ctx: click.Context, name: str):
         return ServerRunCommand(name=name).make_command()
+
 
 class PolymathProjectCommand(click.MultiCommand):
 
     def list_commands(self, ctx):
         return ["create"]
 
-    def get_command(self, ctx:click.Context, name: str):
+    def get_command(self, ctx: click.Context, name: str):
         return ProjectCreateCommand(name=name).make_command()
 
 
@@ -88,14 +89,14 @@ class PolymathConfigCommand(click.MultiCommand):
     def list_commands(self, ctx):
         return ["create"]
 
-    def get_command(self, ctx:click.Context, name: str):
+    def get_command(self, ctx: click.Context, name: str):
         return ProjectCreateCommand(name=name).make_command()
 
 
 root_cmd = click.Group()
-root_cmd.add_command( PolymathServerCommand(help=''), name="server")
-root_cmd.add_command( PolymathProjectCommand(help=''), name="project")
-root_cmd.add_command( PolymathConfigCommand(help=''), name="config")
+root_cmd.add_command(PolymathServerCommand(help=''), name="server")
+root_cmd.add_command(PolymathProjectCommand(help=''), name="project")
+root_cmd.add_command(PolymathConfigCommand(help=''), name="config")
 
 # root_cmd.add_command( PolymathServerCommand(help=''), name="application")
 # root_cmd.add_command( PolymathServerCommand(help=''), name="plugin")

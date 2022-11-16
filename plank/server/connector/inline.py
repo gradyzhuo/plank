@@ -1,24 +1,26 @@
-import nest_asyncio, asyncio
-from plank.server.message import Request, Response
+import asyncio
+import nest_asyncio
 from plank.server import Server
-from plank.server.inline import InlineServer
 from plank.server.action import Action
 from plank.server.connector import Connector
+from plank.server.inline import InlineServer
+from plank.server.message import Request, Response
 
 nest_asyncio.apply()
+
 
 class InlineConnector(Connector):
 
     @property
-    def server(self)->Server:
+    def server(self) -> Server:
         return self.__server
 
     @property
-    def backend(self)->Action:
+    def backend(self) -> Action:
         return self.__backend
 
     @classmethod
-    def support_scheme(cls) ->str:
+    def support_scheme(cls) -> str:
         return "inline"
 
     # needed to modify inline://local/{service}
