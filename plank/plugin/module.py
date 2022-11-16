@@ -4,11 +4,15 @@ from pathlib import Path
 from typing import NoReturn, Dict, Any, Optional, List, Type, Union
 from plank import logger
 from plank.config import Configuration
-from plank.config.attribute import Attribute
 from plank.app.context import Context
 from plank.serving.service import Service
 from plank.plugin import Plugin
 from plank.plugin.asset import Asset
+
+import nest_asyncio
+import asyncio
+
+nest_asyncio.apply()
 
 class ModulePlugin(Plugin):
     __package_name_mappings__: Dict[str, Plugin] = {}
@@ -186,7 +190,10 @@ class ModulePlugin(Plugin):
     def did_install(self):
         self.__class__.__package_name_mappings__[self.package_name] = self
         logger.info(f"plugin did install: {self.name}")
-        self.delegate.plugin_did_install(plugin=self)
+
+        cor_or_not = self.delegate.plugin_did_install(plugin=self)
+        if inspect.isawaitable(cor_or_not):
+            asyncio.run(cor_or_not)
 
     def did_discover(self):
         logger.info(f"plugin did discover: {self.name}")

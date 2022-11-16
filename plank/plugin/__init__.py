@@ -1,6 +1,6 @@
 from __future__ import annotations
 from plank.app.context import Context
-from plank.serving.service import ServiceManagerable
+from plank.serving.interface import ServiceManagerable
 from typing import List, Dict, Any, NoReturn, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -97,13 +97,6 @@ class Plugin(ServiceManagerable):
     def did_discover(self):
         pass
 
-    def services(self) ->List[Service]:
-        from plank.serving.service import Service
-        return Service.registered(plugin=self.name)
-
     def add_service(self, service: Service):
-        from plank.serving.service import Service
-        Service.register(service, name=service.name(), plugin=self.name)
-
-    def service(self, name: str)->Service:
-        return Service.from_name(name=name, plugin=self.name)
+        super().add_service(service)
+        service.__did_add_to_plugin__(plugin=self)
