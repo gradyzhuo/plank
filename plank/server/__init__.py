@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any, TYPE_CHECKING
 from pathlib import Path
 from collections import namedtuple
 from plank.app import Application
+from plank.app.context import Context
 
 if TYPE_CHECKING:
     from plank.server.action import Action
@@ -30,6 +31,10 @@ class Server:
         return self.__delegate
 
     @property
+    def path_prefix(self) -> str:
+        return self.__path_prefix
+
+    @property
     def bind_address(self)->BindAddress:
         return self.__bind_address
 
@@ -41,15 +46,21 @@ class Server:
     def actions(self)->Dict[str, Action]:
         return self.__registered_backends
 
-    def __init__(self, application: Application, delegate: Optional[Server.Delegate]=None):
+    def __init__(self, application: Application, delegate: Optional[Server.Delegate]=None, path_prefix: Optional[str]=None):
         self.__bind_address = None
         self.__registered_backends = {}
         self.__application = application
+        self.__path_prefix = path_prefix
 
         if delegate is None and isinstance(application.delegate, Server.Delegate):
             self.__delegate = application.delegate
         else:
             self.__delegate = delegate or Server.Delegate()
+
+        standard_context = Context.standard()
+        vars = []
+        vars.append(("path_prefix", path_prefix or ""))
+        standard_context.update(vars)
 
     def add_action(self, backend: Action):
         self.__registered_backends[backend.routing_path()] = backend

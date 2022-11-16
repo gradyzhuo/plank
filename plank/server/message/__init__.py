@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
 class Request(BaseModel):
+    method: str
     headers: Dict[str, str] = {}
     arguments: Dict[str, Any]
 
