@@ -10,8 +10,8 @@ from typing import NoReturn, Dict, Any, Optional, List, Type, Union
 
 import nest_asyncio
 from plank import logger
-from plank.app.context import Context
-from plank.config import Configuration
+from plank.context import Context
+from plank.configuration import Configuration
 from plank.plugin import Plugin
 from plank.plugin.asset import Asset
 from plank.serving.service import Service

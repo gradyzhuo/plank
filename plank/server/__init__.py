@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any, TYPE_CHECKING
 
 from plank.app import Application
-from plank.app.context import Context
+from plank.context import Context
+from plank.configuration import Configuration
 
 if TYPE_CHECKING:
     from plank.server.action import Action
@@ -24,15 +25,6 @@ class Server:
         def server_did_startup(self, server: Server): pass
 
         def server_did_shutdown(self, server: Server): pass
-
-    #
-    @classmethod
-    def build(cls, name: str, version: str, delegate: Server.Delegate, workspace: Path,
-              build_version: Optional[str] = None, configuration_path: Optional[Path] = None,
-              **server_kwargs) -> Server:
-        application = Application.construct(name=name, version=version, build_version=build_version, delegate=delegate,
-                                            workspace_path=workspace, configuration_path=configuration_path)
-        return cls(application=application, **server_kwargs)
 
     @property
     def delegate(self) -> Server.Delegate:

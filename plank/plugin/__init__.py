@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Dict, Any, NoReturn, Optional, TYPE_CHECKING
 
-from plank.app.context import Context
+from plank.context import Context
 from plank.serving.interface import ServiceManagerable
 
 if TYPE_CHECKING:

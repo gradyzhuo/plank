@@ -38,11 +38,23 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "plank-core"
-version = "0.1.0"
+version = "0.1.1"
 description = "The core function of plank."
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
+
+[[package]]
+name = "plank-material"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+plank-core = ">=0.1.0,<0.2.0"
+toml = ">=0.10.2,<0.11.0"
 
 [[package]]
 name = "plank-tool-logger"
@@ -94,7 +106,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "9a468018b1479433bf7fb12e26e1bd0f32467b33f24f21ad4504dc64f6e85a0c"
+content-hash = "e49246e015d9afc8be27ab7f8053fd5c18494fbd62c7c58dfcdbb8871460ac14"
 
 [metadata.files]
 click = [
@@ -113,8 +125,12 @@ nest-asyncio = [
     {file = "nest_asyncio-1.5.6.tar.gz", hash = "sha256:d267cc1ff794403f7df692964d1d2a3fa9418ffea2a3f6859a439ff482fef290"},
 ]
 plank-core = [
-    {file = "plank_core-0.1.0-py3-none-any.whl", hash = "sha256:c4fb8b8bfe2664c403ce96343bddf6b390ae1b3f6eb1c3269d87081656994f7a"},
-    {file = "plank_core-0.1.0.tar.gz", hash = "sha256:345f085bf1926bfe2d95f9b5da9648d3878633a5572f7f18b90faf19b39ef05b"},
+    {file = "plank_core-0.1.1-py3-none-any.whl", hash = "sha256:d25bbd4fa8d40cfbb6f54c13b0fb41c4d2b53474d21a12ef09429d178b5bfe3c"},
+    {file = "plank_core-0.1.1.tar.gz", hash = "sha256:7242deeeddfe69f2b0a7112006ee93f0fb2f4597ab81435454ecff14dbe449b2"},
+]
+plank-material = [
+    {file = "plank_material-0.1.0-py3-none-any.whl", hash = "sha256:f1b24a7a8e141cf3bd3009580cb5789bb87d16ad599cc16cb4233dc31106887d"},
+    {file = "plank_material-0.1.0.tar.gz", hash = "sha256:5f290a60a6debea42554f546ddbf22367321996b55bfb60e3dc77938d2259ad8"},
 ]
 plank-tool-logger = [
     {file = "plank_tool_logger-0.1.0-py3-none-any.whl", hash = "sha256:0728b684e78c0fa371c0b6d3d0cabe48c0862898a84fb501c062c9a8e40d40ce"},

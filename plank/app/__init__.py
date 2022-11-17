@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Optional, List, Any, Dict, Type, Union, TYPE_CHECKING
 
 from plank import logger
-from plank.app.context import Context
-from plank.config import Configuration
+from plank.context import Context
+from plank.configuration import Configuration
 from plank.serving.interface import ServiceManagerable
 from plank.serving.service import Service
 
@@ -86,50 +86,10 @@ class Application(ServiceManagerable):
                 f"Application had no an instance. please get instance by Application(delegate=...) first.")
         return getattr(cls, _Application__singleton_key)
 
-    @classmethod
-    def construct(cls, name: str, version: str, delegate: Union[Application.Delegate, Type[Application.Delegate]],
-                  workspace_path: Path, build_version: Optional[str] = None, configuration_path: Optional[Path] = None,
-                  **kwargs) -> Application:
-        defaults = Context.standard()
-        defaults.set("workspace_path", str(workspace_path))
-        defaults.set("application.name", name)
-        defaults.set("app.name", name)
-
-        configuration_path = configuration_path or workspace_path / "configuration" / "configuration.toml"
-        programs = Configuration.build(path=configuration_path)
-        if not isinstance(delegate, Application.Delegate) and issubclass(delegate, Application.Delegate):
-            delegate = delegate()
-        application = Application(name=name, version=version, build_version=build_version, delegate=delegate,
-                                  programs=programs)
-        if not hasattr(cls, _Application__singleton_key):
-            application.as_main()
-        return application
-
-    @classmethod
-    def construct_from_configuration_path(cls, configuration_path: Path, delegate: Application.Delegate, **kwargs):
-        programs = Configuration.build(path=configuration_path)
-
-        application = Application(
-            delegate=delegate,
-            programs=programs,
-            **kwargs
-        )
-        if not hasattr(cls, _Application__singleton_key):
-            application.as_main()
-
-        return application
-
     def __init__(self, delegate: Application.Delegate, configuration: Configuration) -> None:
         self.__delegate = delegate
         self.__configuration = configuration
-        # self.__name = configuration.app.name
-        # self.__version = configuration.app.version
-        # self.__build_version = configuration.app.build_version
-        # self.__name = name or "${app.name}"
-        # self.__version = version or "${app.version}"
-        # self.__build_version = build_version or "${app.build_version}"
         self.__loaded = False
-        # self.__programs = programs
         self.__installed_plugins = []
 
     def as_main(self):

@@ -1,4 +1,4 @@
-from plank.config import Configuration
+from plank.configuration import Configuration
 from plank.utils.command.base import *
 
 

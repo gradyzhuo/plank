@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional, Union, TYPE_CHECKING, NoReturn
 
 from pydantic import BaseModel
 
-from plank.app.context import Context
+from plank.context import Context
 from plank.serving import Serving
 
 if TYPE_CHECKING:
