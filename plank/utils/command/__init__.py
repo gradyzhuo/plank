@@ -63,7 +63,7 @@ class ServerRunCommand(BaseCommand):
 #         return ["application", "plugin"]
 #
 #     def get_command(self, ctx:click.Context, name: str):
-#         print("name:", name, ctx.parent, ctx.info_name, ctx.params, ctx.meta)
+#         print("name:", name, ctx.parent, ctx.info_name, ctx.params, ctx.metaclass)
 #         return click.Command(name=name, callback=lambda *args, **kwargs: print("hello run:", args, kwargs))
 
 class PolymathServerCommand(click.MultiCommand):

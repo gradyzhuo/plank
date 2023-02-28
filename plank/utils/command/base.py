@@ -1,10 +1,9 @@
 from typing import List, NoReturn, Dict, Any
 
 import click
-from plank.serving import Serving
 
 
-class BaseCommand(Serving):
+class BaseCommand:
 
     def name(self) -> str:
         return self.__name
