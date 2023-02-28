@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, List, Any, Dict, Type, Union, TYPE_CHECKING
+from typing import Any, Dict, Type, TYPE_CHECKING, List
+
+from plank.configuration import Configuration
+from plank.context import Context
 
 from plank import logger
-from plank.context import Context
-from plank.configuration import Configuration
-from plank.serving.interface import ServiceManagerable
-from plank.serving.service import Service
 
 if TYPE_CHECKING:
     from plank.plugin import Plugin
+    from plank.service import ServiceManager
 
 _Application__singleton_key = "__sigleton"
 
 
-class Application(ServiceManagerable):
+class Application:
     class Delegate:
         def application_will_launch(self, app: Application, launch_options: Dict[str, Any]): pass
 
@@ -71,9 +71,12 @@ class Application(ServiceManagerable):
 
     @property
     def plugins(self) -> List[Plugin]:
-        return self.__installed_plugins or []
-        # plugin_type = self.delegate.application_using_plugin_type(app=self)
-        # return plugin_type.installed()
+        return self.__installed_plugins_context.values()
+
+    @property
+    def services(self) -> ServiceManager:
+        from plank.service import ServiceManager
+        return ServiceManager.shared()
 
     @property
     def loaded(self):
@@ -90,12 +93,12 @@ class Application(ServiceManagerable):
         self.__delegate = delegate
         self.__configuration = configuration
         self.__loaded = False
-        self.__installed_plugins = []
+        self.__installed_plugins_context = Context.standard(namespace="collection.plugins")
 
     def as_main(self):
         setattr(Application, _Application__singleton_key, self)
 
-    def _load_plugin(self):
+    def __processing_plugin(self):
         plugin_prefixes = self.configuration.plugin.prefix
         plugins = []
         for prefix in plugin_prefixes:
@@ -105,19 +108,27 @@ class Application(ServiceManagerable):
 
         if len(plugins) > 0:
             self.delegate.application_did_discover_plugins(app=self, plugins=plugins)
+
         for plugin in plugins:
             try:
                 if self.delegate.application_should_install_plugin(app=self, plugin=plugin):
-                    plugin_type.install(plugin=plugin)
-                    self.__installed_plugins.append(plugin)
+                    plugin.install(context=self.__installed_plugins_context)
                     self.delegate.application_did_install_plugin(app=self, plugin=plugin)
                     # load plugin if installed, otherwise passing.
                     if self.delegate.application_should_load_plugin(app=self, plugin=plugin):
                         plugin.load()
                         self.delegate.application_did_load_plugin(app=self, plugin=plugin)
+                    # add service from plugin to app
+                    for name, service in plugin.services.items():
+                        service.did_install(plugin=plugin)
+                        self.services.add(service=service, name=name)
+
             except Exception as e:
-                logger.error(f"The error happened on loading plugin: {plugin.name}.")
+                logger.error(f"[Application] The error happened on processing plugin: {plugin.name}.")
                 raise e
+
+    def plugin(self, name: str) -> Plugin:
+        return self.__installed_plugins_context.get(name)
 
     def unload(self):
         for plugin in self.plugins:
@@ -125,10 +136,8 @@ class Application(ServiceManagerable):
         self.__loaded = False
 
     def launch(self, **options):
-        if self.__loaded: return
-
-        # configuration = self.__programs.get(program)
-        # assert configuration is not None, f"{program} not in programs({self.__programs.keys()})"
+        if self.__loaded:
+            return
         self.__configuration.set_default()
         self.__delegate.application_will_launch(self, options)
         standard_context = Context.standard()
@@ -137,17 +146,14 @@ class Application(ServiceManagerable):
         self.as_main()
         self.__delegate.application_did_launch(self)
 
-        self._load_plugin()
+        self.__processing_plugin()
         for plugin in self.plugins:
             plugin.delegate.application_did_launch(plugin=plugin, launch_options=options)
 
         self.__loaded = True
 
     def _server_did_startup(self, server):
-        for service in Service.registered():
-            actions = service.get_actions()
-            print("actions:", actions)
-            server.add_actions(*(actions.values()))
+        pass
 
     def _server_did_shutdown(self, server):
         pass

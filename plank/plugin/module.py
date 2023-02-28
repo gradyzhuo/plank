@@ -4,6 +4,7 @@ import asyncio
 import importlib
 import inspect
 import pkgutil
+import traceback
 import sys
 from pathlib import Path
 from typing import NoReturn, Dict, Any, Optional, List, Type, Union
@@ -14,10 +15,8 @@ from plank.context import Context
 from plank.configuration import Configuration
 from plank.plugin import Plugin
 from plank.plugin.asset import Asset
-from plank.serving.service import Service
 
 nest_asyncio.apply()
-
 
 class ModulePlugin(Plugin):
     __package_name_mappings__: Dict[str, Plugin] = {}
@@ -107,6 +106,7 @@ class ModulePlugin(Plugin):
     @classmethod
     def construct_parameters(cls, plugin_info: Dict[str, Any]) -> Dict[str, Any]:
         k_ModulePlugin__name = "name"
+        k_ModulePlugin__kind = "kind"
         k_ModulePlugin__delegate = "delegate"
 
         def _parse_type(description: Optional[str]):
@@ -122,17 +122,32 @@ class ModulePlugin(Plugin):
             return delegate_type()
 
         name = plugin_info[k_ModulePlugin__name]
+        kind = plugin_info.get(k_ModulePlugin__kind)
 
         try:
             _delegate = _gen_delegate(delegate_str=plugin_info.get(k_ModulePlugin__delegate))
         except Exception as e:
-            logger.error(f"_gen_delegate failed: {e}.")
+            err_type = e.__class__.__name__  # 取得錯誤的class 名稱
+            info = e.args[0]  # 取得詳細內容
+            detains = traceback.format_exc()  # 取得完整的tracestack
+            n1, n2, n3 = sys.exc_info()  # 取得Call Stack
+            lastCallStack = traceback.extract_tb(n3)[-1]  # 取得Call Stack 最近一筆的內容
+            fn = lastCallStack[0]  # 取得發生事件的檔名
+            lineNum = lastCallStack[1]  # 取得發生事件的行數
+            funcName = lastCallStack[2]  # 取得發生事件的函數名稱
+            errMesg = f"FileName: {fn}, lineNum: {lineNum}, Fun: {funcName}, reason: {info}, trace:\n {traceback.format_exc()}"
+            logger.error(f"_gen_delegate failed: {errMesg}.")
             raise e
 
         return {
             "name": name,
+            # "kind": kind,
             "delegate": _delegate
         }
+
+    @property
+    def kind(self)->Optional[str]:
+        return self.__kind
 
     @property
     def module(self):
@@ -146,15 +161,13 @@ class ModulePlugin(Plugin):
     def data_folder_path(self) -> Path:
         return self.__data_folder_path
 
-    def services(self) -> List[Service]:
-        return Service.registered()
-
     @property
     def context(self) -> ModulePlugin.PluginContext:
         return self.__context
 
-    def __init__(self, name: str, module, delegate: Optional[Plugin.Delegate] = None) -> None:
+    def __init__(self, name: str, module, kind: Optional[str]=None, delegate: Optional[Plugin.Delegate] = None) -> None:
         self.__name = name
+        self.__kind = kind
         self.__module = module
         self.__delegate = delegate or Plugin.Delegate()
         self.__context = self.__class__.PluginContext.standard(namespace=f"plugin.config.{module.__package__}")
@@ -168,22 +181,7 @@ class ModulePlugin(Plugin):
     def _delegate(self) -> Plugin.Delegate:
         return self.__delegate
 
-    def will_load(self) -> NoReturn:
-        pass
-
-    def load(self) -> NoReturn:
-        self.will_load()
-        logger.info(f"plugin did load: {self.name}")
-        self.delegate.plugin_did_load(plugin=self)
-
-    def launch(self, **options) -> NoReturn:
-        pass
-        # for extension_info in self.__extension_infos:
-        #     server.add_backend(path=extension_info.extension.serving_path(), action=ServingBackend(serving=extension_info.extension))
-        # server.listen()
-
-    def did_unload(self) -> NoReturn:
-        pass
+    def did_unload(self) -> NoReturn: pass
 
     def unload(self):
         self.delegate.plugin_did_unload(plugin=self)
@@ -191,14 +189,14 @@ class ModulePlugin(Plugin):
 
     def did_install(self):
         self.__class__.__package_name_mappings__[self.package_name] = self
-        logger.info(f"plugin did install: {self.name}")
 
         cor_or_not = self.delegate.plugin_did_install(plugin=self)
         if inspect.isawaitable(cor_or_not):
             asyncio.run(cor_or_not)
 
+
     def did_discover(self):
-        logger.info(f"plugin did discover: {self.name}")
+        logger.debug(f"[Plugin] {self.name} discovered.")
         self.delegate.plugin_did_discover(plugin=self)
 
     def asset(self, name: str) -> Optional[Asset]:
@@ -208,21 +206,13 @@ class ModulePlugin(Plugin):
             available_keys = "[ " + ",".join(self.__assets.keys()) + " ]"
             raise KeyError(
                 f"The asset name: {name}, not found in plugin: {self.name}, available keys: {available_keys}")
-
-    # #inline://{PLUGIN}:{EXTENSION_PORT/
-    # def connector(self, extension_name: str)->Connector:
-    #     configuration = Configuration.default()
-    #     connector_base_url = configuration.plugin.connector_base_url(plugin_name=self.name)
-    #     connector_url = f"{connector_base_url}/{extension_name}"
-    #     connector_type = Connector.get_type(url=connector_url)
-    #     return connector_type(url=connector_url)
-
     def assets_by_type(self, asset_type: str) -> Dict[str, Asset]:
         return {
             asset_name: self.asset(asset_name)
             for asset_name, asset in self.__assets.items()
             if asset.type == asset_type
         }
+
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.__name})"

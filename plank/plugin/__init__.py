@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any, NoReturn, Optional, TYPE_CHECKING
+from typing import List, Dict, Any, NoReturn, Optional
 
+from plank import logger
 from plank.context import Context
-from plank.serving.interface import ServiceManagerable
-
-if TYPE_CHECKING:
-    from plank.serving.service import Service
+from plank.service import ServiceManager
 
 
-class Plugin(ServiceManagerable):
+class Plugin:
     """
-    Abstract class to define what should be implemented.
+    Abstract class to define what should be imp.
     """
     __inherited__: List[Plugin] = []
 
@@ -40,14 +38,6 @@ class Plugin(ServiceManagerable):
         raise NotImplementedError(f"The construct_parameters method of Plugin({cls.__name__}) did not implement.")
 
     @classmethod
-    def install(cls, plugin: Plugin):
-        context = Context.standard(cls.__qualname__)
-        context.set(key=plugin._name(), value=plugin)
-        if cls is not Plugin:
-            Plugin.install(plugin)
-        plugin.did_install()
-
-    @classmethod
     def installed(cls) -> List[Plugin]:
         context = Context.standard(cls.__qualname__)
         return list(context.values())
@@ -58,6 +48,12 @@ class Plugin(ServiceManagerable):
         if name not in context.keys():
             raise KeyError(f"Any plugin can be found with name: {name}, by type of plugin: {cls.__qualname__}.")
         return context.get(key=name)
+
+
+    @property
+    def services(self)->ServiceManager:
+        manager_scope = f"{self.__class__.__name__}.{self.name}"
+        return ServiceManager.shared(scope=manager_scope)
 
     @classmethod
     def current(cls) -> Optional[Plugin]:
@@ -80,13 +76,23 @@ class Plugin(ServiceManagerable):
         return self._delegate()
 
     def _name(self) -> str:
-        raise NotImplementedError(f"The name of Plugin({self.__class__.__name__}) not implemented.")
+        raise NotImplementedError(f"The name of Plugin({self.__class__.__name__}) not imp.")
 
     def _delegate(self) -> Plugin.Delegate:
-        raise NotImplementedError(f"The delegate of Plugin({self.__class__.__name__}) not implemented.")
+        raise NotImplementedError(f"The delegate of Plugin({self.__class__.__name__}) not imp.")
+
+    def install(self, context: Context, *args, **kwargs):
+        context.set(key=self._name(), value=self)
+        self.did_install()
+        logger.info(f"[Plugin] {self.name} installed.")
+
+    def _loading(self) -> NoReturn:
+        pass
 
     def load(self) -> NoReturn:
-        pass
+        self._loading()
+        self.delegate.plugin_did_load(plugin=self)
+        logger.debug(f"[Plugin] {self.name} loaded.")
 
     def unload(self):
         pass
@@ -96,7 +102,3 @@ class Plugin(ServiceManagerable):
 
     def did_discover(self):
         pass
-
-    def add_service(self, service: Service):
-        super().add_service(service)
-        service.__did_add_to_plugin__(plugin=self)
