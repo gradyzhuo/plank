@@ -46,5 +46,8 @@ jobs:
         with:
           files: dist/*.whl
           tag: ${{ github.ref_name }}
-          body: "Creation of release after ${{ github.ref_name }} tag has been pushed to repository."
+          body: 
+            run: |
+              cat "${{ github.workspace }}/pyproject.toml" 
+
 
