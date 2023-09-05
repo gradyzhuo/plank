@@ -46,7 +46,6 @@ jobs:
         with:
           files: dist/*.whl
           tag: ${{ github.ref_name }}
-          body: |
-            cat "${{ github.workspace }}/pyproject.toml"
+          body: ${{ github.workspace }}/pyproject.toml
 
 
