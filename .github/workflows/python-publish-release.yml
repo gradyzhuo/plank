@@ -39,6 +39,11 @@ jobs:
           git config --global user.email "gradyzhuo@ospark.org"
           git config --global user.name "Grady Zhuo"
 
+      - name: Get Release Note
+        id: get-release-note
+        run: |
+          echo "RELEASE_NOTE=$(cat ${{ github.workspace }}/pyproject.toml)" >> $GITHUB_OUTPUT
+
       - name: Release
         uses: nicovince/manage-release@v1
         env:
@@ -46,6 +51,6 @@ jobs:
         with:
           files: dist/*.whl
           tag: ${{ github.ref_name }}
-          body: "`cat ${{ github.workspace }}/pyproject.toml`"
+          body: ${{ steps.get-release.outputs.RELEASE_NOTE }}
 
 
