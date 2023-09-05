@@ -51,6 +51,6 @@ jobs:
         with:
           files: dist/*.whl
           tag: ${{ github.ref_name }}
-          body: ${{ steps.get-release.outputs.RELEASE_NOTE }}
+          body: ${{ steps.get-release-note.outputs.RELEASE_NOTE }}
 
 
