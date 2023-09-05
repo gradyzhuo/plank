@@ -17,26 +17,43 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  build_wheel:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-    - name: Build package
-      run: python -m build
-    - name: Github Release
-      # You may pin to the exact commit or the version.
-      # uses: elgohr/Github-Release-Action@ee467147e2876b05568a0d7afaab125124914e5b
-      uses: elgohr/Github-Release-Action@v4
-      with:
-        # The name of the release to publish
-        title: hello
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      - name: Build package
+        run: python -m build
+        
+      - name: Configure Git
+        run: |
+          git config --global user.email "apwheele@gmail.com"
+          git config --global user.name "apwheele"
+          
+      - name: Commit and push wheel
+        run: |
+          git add -f ./dist/*.whl
+          git commit -m 'pushing new wheel'
+          git push
+      
+    
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release
+        uses: fnkr/github-action-ghr@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GHR_PATH: dist/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
