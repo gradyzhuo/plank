@@ -13,8 +13,7 @@ on:
     tags:
       - '*'
 
-permissions:
-  contents: read
+permissions: read-all|write-all
 
 jobs:
   build_wheel:
@@ -44,7 +43,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GHR_PATH: dist/
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
 
 #  release:
