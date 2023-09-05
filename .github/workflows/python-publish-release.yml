@@ -41,8 +41,10 @@ jobs:
 
       - name: Get Release Note
         id: get-release-note
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "RELEASE_NOTE=$(cat ${{ github.workspace }}/pyproject.toml)" >> $GITHUB_OUTPUT
+          echo "note=$(cat ${{ github.workspace }}/README.md)" >> $GITHUB_OUTPUT
 
       - name: Release
         uses: nicovince/manage-release@v1
@@ -51,6 +53,6 @@ jobs:
         with:
           files: dist/*.whl
           tag: ${{ github.ref_name }}
-          body: ${{ steps.get-release-note.outputs.RELEASE_NOTE }}
+          body: ${{ steps.get-release-note.outputs.note }}
 
 
