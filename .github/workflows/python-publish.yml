@@ -41,10 +41,9 @@ jobs:
           
       - name: Commit and push wheel
         run: |
-          git checkout -b main
           git add -f ./dist/*.whl
           git commit -m 'pushing new wheel'
-          git push
+          git push --set-upstream origin main
       
     
 
