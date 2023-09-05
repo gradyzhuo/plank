@@ -40,8 +40,7 @@ jobs:
           git config --global user.name "Grady Zhuo"
 
       - name: Release
-        uses: dev-build-deploy/release-me@main
-        if: startsWith(github.ref, 'refs/tags/')
+        uses: dev-build-deploy/release-me@v0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config: .github/release.yml  # OPTIONAL; path to a Release configuration
