@@ -44,7 +44,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo note=$(cat ${{ github.workspace }}/README.md) >> $GITHUB_OUTPUT
+          echo note=$(cat ${{ github.workspace }}/RELEASE) >> $GITHUB_OUTPUT
 
       - name: Release
         uses: nicovince/manage-release@v1
