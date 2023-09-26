@@ -1,0 +1,35 @@
+[app]
+name = "test"
+version = "2.0"
+delegate = ""
+build_version = "2022.08.17"
+debug = false
+
+[app.env]
+prefix = "test"
+
+[logger]
+level = "DEBUG"
+
+[path]
+workspace = "/Users/gradyzhuo/Library/Caches/pypoetry/virtualenvs/irian-34jElAj--py3.9/workspace/app/irian"
+data = "${path.workspace}/data"
+plugin = "${path.data}/${PLUGIN}"
+
+[plugin]
+
+
+[extra]
+
+
+### program override
+
+[program.debug]
+app.debug = true
+logger.level = "DEBUG"
+
+[program.release]
+logger.level = "INFO"
+
+[program.beta]
+logger.level = "INFO"
